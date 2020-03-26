@@ -1,6 +1,12 @@
 # Mac Finder display config
 *.DS_Store
+
 # pycharm config
 .idea
+
 # files for developing package
-dev
+dev/
+
+# some empty directories and personal data generated during development
+data/
+!*.gitkeep
