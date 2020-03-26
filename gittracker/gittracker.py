@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from .tracker.tracker import get_status
+
 def gittracker("kwargs here"):
     # if logfile of expected locations exists,
         #  load it in
