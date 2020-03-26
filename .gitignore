@@ -2,5 +2,5 @@
 *.DS_Store
 # pycharm config
 .idea
-# jupyter notebooks for development
-notebooks
+# files for developing package
+dev
