@@ -1,2 +1,4 @@
 # pycharm config
 .idea
+# jupyter notebooks for development
+notebooks
