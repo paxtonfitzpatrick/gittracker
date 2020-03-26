@@ -1,3 +1,5 @@
+# Mac Finder display config
+*.DS_Store
 # pycharm config
 .idea
 # jupyter notebooks for development
