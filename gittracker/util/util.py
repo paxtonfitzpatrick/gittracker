@@ -112,5 +112,3 @@ def validate_repo(repo_path):
     # check that directory is a git repository
     if '.git' not in listdir(repo_path):
         raise NoGitdirError(repo_path)
-
-    return repo_path
