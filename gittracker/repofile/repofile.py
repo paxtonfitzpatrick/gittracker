@@ -2,7 +2,12 @@ from os import getcwd, walk
 from os.path import basename, isdir, join as opj
 from pathlib import Path
 from sys import exit
-from ..util.exceptions import RepoNotFoundError, NoGitdirError
+from ..util.exceptions import (
+    BugIdentified,
+    GitTrackerError,
+    NoGitdirError,
+    RepoNotFoundError
+)
 from ..util.util import (
     cleanpath,
     clear_display,
@@ -24,7 +29,6 @@ def auto_find_repos(
         quiet=False,
         permission_err='show'
 ):
-
     # default to searching under current working directory
     if toplevel_dir is None:
         toplevel_dir = getcwd()
@@ -110,7 +114,7 @@ def auto_find_repos(
                  f"tracking in logfile at {KNOWN_REPOS_FPATH}\033[0m")
 
 
-def load_known_repos():
+def load_tracked_repos():
     # loads in known-repos file as a list of paths (strings)
     with open(KNOWN_REPOS_FPATH, 'r') as f:
         paths = f.read().splitlines()
@@ -135,7 +139,7 @@ def manual_add(repo_path):
         valid = prompt_input(prompt, default='no')
 
     if valid:
-        if full_path in load_known_repos():
+        if full_path in load_tracked_repos():
             # don't add a duplicate if the repository is already being tracked
             exit(f"\033[31m{full_path} is already tracked by GitTracker\033[0m")
         else:
@@ -149,7 +153,7 @@ def manual_remove(repo_path):
     # manually remove a repository from
     # known-repos file and stop tracking it
     full_path = cleanpath(repo_path)
-    tracked_repos = load_known_repos()
+    tracked_repos = load_tracked_repos()
     try:
         tracked_repos.remove(full_path)
         with open(KNOWN_REPOS_FPATH, 'w') as f:
@@ -167,7 +171,7 @@ def show_tracked(quiet=False):
     # repositories to the screen. If quiet
     # is True, show directory names only.
     # Otherwise, show full paths.
-    tracked = load_known_repos()
+    tracked = load_tracked_repos()
     if quiet:
         tracked = list(map(lambda p: basename(p), tracked))
     print(
@@ -175,5 +179,103 @@ def show_tracked(quiet=False):
         end='\n\t'
     )
     print('\n\t'.join(tracked))
-    if not quiet:
-        exit(f"")
+
+
+@log_error
+def validate_tracked():
+    def _update_repofile(tracked_paths, replacements, removals):
+        # helper function that takes care of updating/removing
+        # user-specified repo paths in the logfile, either after
+        # checking all existing paths or as cleanup before raising
+        # exception
+        if len(replacements) == 0 and len(removals) == 0:
+            return
+        # replace updated paths
+        for old, new in replacements:
+            ix = tracked_paths.index(old)
+            tracked_paths[ix] = new
+        # remove deleted paths
+        for removal in removals:
+            tracked_paths.remove(removal)
+        with open(KNOWN_REPOS_FPATH, 'w') as f:
+            f.write('\n'.join(tracked_paths))
+            # always leave newline at end of file for convenience
+            f.write('\n')
+
+    tracked = load_tracked_repos()
+    # list of tuples (old path, new path)
+    to_replace = []
+    # list of paths to be removed
+    to_remove = []
+    for repo_path in tracked:
+        try:
+            validate_repo(repo_path)
+        except GitTrackerError as e:
+            if isinstance(e, RepoNotFoundError):
+                error_info = "\033[31mPreviously tracked repository at " \
+                             f"{repo_path} appears to no longer exist\033[0m. " \
+                             "Has the repository been moved or deleted?"
+
+            elif isinstance(e, RepoNotFoundError):
+                error_info = "\033[31mPreviously tracked directory at " \
+                             f"{repo_path} appears to no longer be a git " \
+                             "repository (no .git directory found)\033[0m/. " \
+                             "Has the repository been moved or deleted?"
+            else:
+                # unexpected exception - should never get here, but it's a failsafe
+                _update_repofile(tracked, to_replace, to_remove)
+                raise e
+
+            options_info = "- Enter 'u' to update the repository's path\n" \
+                           "- Enter 'd' to stop tracking the repository\n" \
+                           "- Enter 'b' if you think you've encountered a bug " \
+                           "in GitTracker\n- Enter 'q' to quit\n"
+            options = '[u/d/b/q]'
+            response = input(f"{error_info}\n{options_info}\{options}\n").lower()
+            while True:
+                if response == 'u':
+                    update_prompt = f"please enter the updated path for {repo_path}\n"
+                    input_path = input(update_prompt)
+                    full_path = cleanpath(input_path)
+                    try:
+                        validate_repo(full_path)
+                        replace_confirmed = True
+                    except RepoNotFoundError:
+                        override_prompt = f"{full_path} does not appear to " \
+                                          "be a directory. Add it anyway?"
+                        replace_confirmed = prompt_input(
+                            override_prompt,
+                            default='no',
+                            possible_bug=True
+                        )
+                    except NoGitdirError:
+                        override_prompt = f"{full_path} does not appear to " \
+                                          "be a git repository. Add it anyway?"
+                        replace_confirmed = prompt_input(
+                            override_prompt,
+                            default='no',
+                            possible_bug=True
+                        )
+                    if replace_confirmed:
+                        to_replace.append((repo_path, full_path))
+                        break
+                elif response == 'd':
+                    delete_prompt = f"stop tracking {repo_path}?"
+                    delete_confirmed = prompt_input(delete_prompt, default='no')
+                    if delete_confirmed:
+                        to_remove.append(repo_path)
+                        break
+                elif response == 'b':
+                    _update_repofile(tracked, to_replace, to_remove)
+                    raise BugIdentified
+                else:
+                    # remaining condition: response == 'q'
+                    print("exiting...")
+                    _update_repofile(tracked, to_replace, to_remove)
+                    exit()
+                # re-prompt with options if user wants to "go back" (e.g., does
+                # not confirm deletion or update to non-repo directory)
+                response = input(f"{options_info}\n{options}\n").lower()
+
+    # finally, update file with changes (if any) after all are validated
+    _update_repofile(tracked, to_replace, to_remove)
