@@ -51,13 +51,13 @@ ${n_changed} ${change_state_msg}:
 # format skeleton for a single modified file in verbosity level 2
 SINGLE_FILE_CHANGE = Template("${change_type}: ${filepath}")
 
-# replacement skeleton for repositories in detatched HEAD states for verbosity
+# replacement skeleton for repositories in detached HEAD states for verbosity
 # levels 1 & 2
 SINGLE_REPO_DETACHED = Template(
 """\
 ${repo_name}
     ${repo_path}
-    ${detatched_head_msg}
+    ${detached_head_msg}
 """
 )
 

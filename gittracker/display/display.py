@@ -128,7 +128,7 @@ class Displayer:
         for repo_path, repo_status in self.repos.items():
             repo_name = basename(repo_path)
             if isinstance(repo_status, (str, dict)):
-                # if the HEAD is either dirty or detatched
+                # if the HEAD is either dirty or detached
                 style = 'red'
                 n_bad += 1
             else:
@@ -151,9 +151,9 @@ class Displayer:
             # assume color for local not even with remote, just for convenience
             name_color = 'red'
             if isinstance(repo_status, str):
-                # HEAD is detatched, use alternate template...
+                # HEAD is detached, use alternate template...
                 template = SINGLE_REPO_DETACHED
-                template_mapping['detatched_head_msg'] = self.format_value_text(
+                template_mapping['detached_head_msg'] = self.format_value_text(
                     value=repo_status,
                     style='red'
                 )
