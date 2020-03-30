@@ -5,9 +5,11 @@ from .templates import (
     OUTER_TEMPLATE,
     REPO_TEMPLATES,
     SINGLE_CHANGE_STATE,
-    SINGLE_FILE_CHANGE
+    SINGLE_FILE_CHANGE,
+    SINGLE_REPO_DETATCHED
 )
 from ..util.util import get_display_width
+
 
 class Displayer:
     def __init__(self, repos, verbosity):
@@ -47,7 +49,6 @@ class Displayer:
         self.full_state_templates = None
         # stores filled `SINGLE_FILE_CHANGE` templates if self.verbosity == 2
         self.full_file_templates = None
-
 
     def format_display(self):
         # fill individual repo templates
@@ -141,11 +142,79 @@ class Displayer:
 
     def _format_v1(self):
         # formatting function for verbosity level 1
-        pass
+        full_repo_templates = []
+        n_good = 0
+        n_bad = 0
+        for repo_path, repo_status in self.repos.items():
+            template_mapping = dict()
+            template_mapping['repo_path'] = repo_path
+            # assume color for local not even with remote, just for convenience
+            name_color = 'red'
+            if isinstance(repo_status, str):
+                # HEAD is detatched, use alternate template...
+                template = SINGLE_REPO_DETATCHED
+                template_mapping['detatched_head_msg'] = self.format_value_text(
+                    value=repo_status,
+                    style='red'
+                )
+                n_bad += 1
+            else:
+                # ...otherwise, use standard template and get further info
+                template = self.repo_template
+                template_mapping['local_branch'] = self.format_value_text(
+                    repo_status['local_branch'],
+                    style='bold'
+                )
+                template_mapping['remote_branch'] = self.format_value_text(
+                    repo_status['remote_branch'],
+                    style='bold'
+                )
+                n_ahead = repo_status['n_commits_ahead']
+                n_behind = repo_status['n_commits_behind']
+                n_ahead_fmt = self.format_value_text(value=n_ahead, style='bold')
+                n_behind_fmt = self.format_value_text(value=n_behind, style='bold')
+                if n_ahead == n_behind == 0:
+                    # local branch is even with remote tracking branch
+                    name_color = 'green'
+                    compare_msg = 'even with'
+                    n_good += 1
+                elif n_ahead > 0 and n_behind > 0:
+                    # local branch is some commits ahead, some behind
+                    compare_msg = f"{n_behind_fmt} commits behind, " \
+                                  f"{n_ahead_fmt} ahead of"
+                    n_bad += 1
+                elif n_ahead > 0:
+                    # local branch is ahead of remote, but not behind
+                    compare_msg = f"{n_ahead_fmt} commits ahead of"
+                    n_bad += 1
+                else:
+                    # local branch behind remote, but not ahead
+                    compare_msg = f"{n_behind_fmt} commits behind"
+                    n_bad += 1
+
+                template_mapping['compared_to_remote'] = compare_msg
+                n_uncommitted = (
+                        repo_status['n_staged']
+                        + repo_status['n_not_staged']
+                        + repo_status['n_untracked']
+                )
+                uncommitted_color = 'green' if n_uncommitted == 0 else 'red'
+                template_mapping['n_uncommitted'] = self.format_value_text(
+                    value=n_uncommitted,
+                    style=('bold', uncommitted_color)
+                )
+
+            template_mapping['repo_name'] = self.format_value_text(
+                value=basename(repo_path),
+                style=('bold', name_color)
+            )
+            full_repo_template = template.safe_substitute(template_mapping)
+            full_repo_templates.append(full_repo_template)
+        return full_repo_templates, n_good, n_bad
 
     def _format_v2(self):
         # formatting function for verbosity level 2
-        pass
+        return
 
     def display(self):
         # print the full output to the screen

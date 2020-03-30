@@ -20,7 +20,7 @@ SINGLE_REPO_V1 = Template(
 ${repo_name}
     ${repo_path}
     on branch ${local_branch}: ${compared_to_remote} ${remote_branch}
-    ${n_uncommitted}\
+    ${n_uncommitted} changes\
 """
 )
 
@@ -50,6 +50,17 @@ ${n_changed} ${change_state_msg}:
 
 # format skeleton for a single modified file in verbosity level 2
 SINGLE_FILE_CHANGE = Template("${change_type}: ${filepath}")
+
+# replacement skeleton for repositories in detatched HEAD states for verbosity
+# levels 1 & 2
+SINGLE_REPO_DETATCHED = Template(
+"""\
+${repo_name}
+    ${repo_path}
+    ${detatched_head_msg}
+"""
+)
+
 
 # mapping of single repository templates by verbosity value
 REPO_TEMPLATES = {
