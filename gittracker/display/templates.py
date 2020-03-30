@@ -1,65 +1,64 @@
 from string import Template
 
 
-# SINGLE_REPO_V0 = Template(
-# # """\033[${repo_name_fmt}m${repo_name}\033[0m"""
-# # )
-# #
-# # SINGLE_REPO_V1 = Template(
-# # """\033[${repo_path_fmt}m${repo_name}\033[0m
-# #     on branch ${local_branch_fmt}${local_branch}\033[0m: ${vs_remote_fmt}${n_commits_ahead} ${ahead_behind}\033[0m ${remote_branch}
-# # """)
-
-SINGLE_REPO_V0 = Template(
-"${repo_name}"
+# wrapper template for full output. Applies to all verbosity levels
+OUTER_TEMPLATE = Template(
+"""\
+${pkg_ascii_logo}: 
+${n_repos_tracked} tracked repositories: ${n_good_repos} up-to-date, ${n_bad_repos} with changes
+${line_sep}
+${repos_status}\
+"""
 )
 
+# single-repository template: verbosity level 0
+SINGLE_REPO_V0 = Template("${repo_name}")
+
+# single-repository template: verbosity level 1
 SINGLE_REPO_V1 = Template(
 """\
 ${repo_name}
     ${repo_path}
     on branch ${local_branch}: ${compared_to_remote} ${remote_branch}
-    ${n_uncommitted} 
+    ${n_uncommitted}\
 """
 )
 
+# single-repository template: verbosity level 2
+# this one has to be constructed somewhat indirectly in order to accommodate
+# different possible states of the repository (e.g., presence or lack of
+# staged/unstaged changes). `file_states` gets filled by instances of
+# `SINGLE_CHANGE_STATE` (if any)
 SINGLE_REPO_V2 = Template(
 """\
 ${repo_name}
     ${repo_path}
     on branch ${local_branch}: ${compared_to_remote} ${remote_branch}
-    
-    ${n_staged} staged files:
-        ${files_staged}
-        
-    $
-    
+    ${file_states}
 """
 )
 
+# format skeleton for a single change state (e.g., staged, not staged,
+# untracked) in verbosity level 2. `changed_files` gets filled by instances
+# of `SINGLE_FILE_CHANGE`
+SINGLE_CHANGE_STATE = Template(
+"""\
+${n_changed} ${change_state_msg}:
+    ${changed_files}\
+"""
+)
 
-class Displayer:
-    def __init__(self, repos, verbosity):
-        """
-        Class that handles formatting and displaying information
-        for tracked repositories according to the given
-        `verbosity` level
-        :param repos: list of dicts
-                dictionaries of "git-status"-like information
-                for each repository
-        :param verbosity: int {0, 1, 2}
-                verbosity level of output (0 is least verbose)
-        """
-        self.repos = repos
-        self.verbosity = verbosity
+# format skeleton for a single modified file in verbosity level 2
+SINGLE_FILE_CHANGE = Template("${change_type}: ${filepath}")
 
-    def format_text(self):
-        pass
+# mapping of single repository templates by verbosity value
+REPO_TEMPLATES = {
+    0: SINGLE_REPO_V0,
+    1: SINGLE_REPO_V1,
+    2: SINGLE_REPO_V2
+}
 
-    def display(self):
-        pass
-
-
+# numeric codes from ANSI escape sequences for text color/formatting
 ANSI_SEQS = {
     'reset_all': 0,
     # INTENSITY/BRIGHTNESS
@@ -72,7 +71,7 @@ ANSI_SEQS = {
     'blue': 34,
     'magenta': 35,
     'cyan': 36,
-    'white': 37
+    'white': 37,
     # 'reset_fg': 39,
     # # BACKGROUND
     # 'black': 40,
