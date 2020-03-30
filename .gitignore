@@ -6,7 +6,3 @@
 
 # files for developing package
 dev/
-
-# some empty directories and personal data generated during development
-data/
-!*.gitkeep
