@@ -25,7 +25,6 @@ def clear_display():
         os.system('clear')
 
 
-
 def is_windows():
     return platform == 'win32'
 
