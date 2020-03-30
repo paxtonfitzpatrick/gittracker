@@ -107,8 +107,7 @@ def prompt_input(prompt, default=None, possible_bug=False):
 
     opts = f"[{opts}]"
     while True:
-        print(f"{prompt}\n{opts}")
-        response = input().lower()
+        response = input(f"{prompt}\n{opts}\n").lower()
         # if user hits return without typing, return default response
         if (default is not None) and (not response):
             return valid_responses[default]
@@ -123,10 +122,10 @@ def prompt_input(prompt, default=None, possible_bug=False):
 def validate_repo(repo_path):
     cleaned_path = cleanpath(repo_path)
     # check directory exists
-    if not isdir(repo_path):
-        raise RepoNotFoundError(repo_path)
+    if not isdir(cleaned_path):
+        raise RepoNotFoundError(cleaned_path)
     # check that directory is a git repository
-    if '.git' not in os.listdir(repo_path):
-        raise NoGitdirError(repo_path)
+    if '.git' not in os.listdir(cleaned_path):
+        raise NoGitdirError(cleaned_path)
 
     return cleaned_path
