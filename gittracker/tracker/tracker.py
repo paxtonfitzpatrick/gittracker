@@ -35,8 +35,9 @@ def get_status(repo_paths, verbose=2, follow_submodules=0):
                 # if HEAD is detached, just report its commit hash...
                 sha_shortened = repo.head.object.hexsha[:7]
                 changes[path] = f'HEAD detached at {sha_shortened}'
-            else:
-                # ...or, if everything is up-to-date, no need to check further
+            elif verbose == 0:
+                # ...or, if everything is up-to-date and that's all we care about
+                # (i.e., because verbosity is low), then no need to check further
                 changes[path] = None
             continue
 
@@ -60,7 +61,7 @@ def _single_repo_status(repo, verbose, follow_submodules):
     :param follow_submodules: bool
             whether or not to include submodules
     :return: dict
-            field: info pairs.  Fields (keys) are sufficient
+            {field: info} pairs.  Fields (keys) are sufficient
             to create a "git-status"-like output for a
             repository, though many are set to None at lower
             verbosity levels
@@ -154,7 +155,6 @@ def _submodule_status(submodule, depth=1):
             `alt_message` is None. Various misbehaviors result in
             `info` being None and `alt_message` being populated
             with a message instead
-
     """
     # TODO: Function needs testing
     # TODO: once expandable GUI view is finished, can allow variable verbosity.
