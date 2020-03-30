@@ -5,7 +5,7 @@ from string import Template
 OUTER_TEMPLATE = Template(
 """\
 ${pkg_ascii_logo}: 
-${n_repos_tracked} tracked repositories: ${n_good_repos} up-to-date, ${n_bad_repos} with changes
+${n_repos_tracked} tracked repositories: ${repo_summary_msg}
 ${line_sep}
 ${repos_status}\
 """
