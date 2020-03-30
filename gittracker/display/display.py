@@ -213,21 +213,131 @@ class Displayer:
         return full_repo_templates, n_good, n_bad
 
     def _format_v2(self):
+        # TODO: this is a lot of redundant code with _format_v1... refactor pls
         # formatting function for verbosity level 2
+        full_repo_templates = []
+        n_good = 0
+        n_bad = 0
+        for repo_path, repo_status in self.repos.items():
+            template_mapping = dict()
+            template_mapping['repo_path'] = repo_path
+            # assume color for local not even with remote, just for convenience
+            name_color = 'red'
+            if isinstance(repo_status, str):
+                # HEAD is detached, use alternate template...
+                template = SINGLE_REPO_DETACHED
+                template_mapping['detached_head_msg'] = self.format_value_text(
+                    value=repo_status,
+                    style='red'
+                )
+                n_bad += 1
+            else:
+                # ...otherwise, use standard template and get further info
+                template = self.repo_template
+                template_mapping['local_branch'] = self.format_value_text(
+                    repo_status['local_branch'],
+                    style='bold'
+                )
+                template_mapping['remote_branch'] = self.format_value_text(
+                    repo_status['remote_branch'],
+                    style='bold'
+                )
+                n_ahead = repo_status['n_commits_ahead']
+                n_behind = repo_status['n_commits_behind']
+                n_ahead_fmt = self.format_value_text(value=n_ahead, style='bold')
+                n_behind_fmt = self.format_value_text(value=n_behind, style='bold')
+                if n_ahead == n_behind == 0:
+                    # local branch is even with remote tracking branch
+                    name_color = 'green'
+                    compare_msg = 'even with'
+                    n_good += 1
+                elif n_ahead > 0 and n_behind > 0:
+                    # local branch is some commits ahead, some behind
+                    compare_msg = f"{n_behind_fmt} commits behind, " \
+                                  f"{n_ahead_fmt} ahead of"
+                    n_bad += 1
+                elif n_ahead > 0:
+                    # local branch is ahead of remote, but not behind
+                    compare_msg = f"{n_ahead_fmt} commits ahead of"
+                    n_bad += 1
+                else:
+                    # local branch behind remote, but not ahead
+                    compare_msg = f"{n_behind_fmt} commits behind"
+                    n_bad += 1
 
-        return
+                template_mapping['compared_to_remote'] = compare_msg
+
+                full_state_templates = []
+                state_change_msgs = {
+                    'staged': 'files staged for commit',
+                    'not_staged': 'files not staged for commit',
+                    'untracked': 'untracked files'
+                }
+                for state, style in zip(
+                        ['staged', 'not_staged', 'untracked'],
+                        ['green', 'red', 'red']
+                ):
+                    if repo_status[f"n_{state}"] > 0:
+                        state_template = SINGLE_CHANGE_STATE
+                        state_mapping = dict()
+                        state_mapping['n_changed'] = repo_status[f'n_{state}']
+                        state_mapping['state_change_msg'] = state_change_msgs[state]
+                        changed_files = []
+                        for file in repo_status[f'files_{state}']:
+                            file_template = SINGLE_FILE_CHANGE
+                            file_template_mapping = dict()
+
+                            if state == 'staged':
+                                change_code, a_path, b_path = file
+                            elif state == 'not_staged':
+                                change_code, a_path = file
+                                # dummy values
+                                b_path = None
+                            else:
+                                # remaining condition is state == 'untracked'
+                                a_path = file
+                                # dummy values
+                                change_code, b_path = None, None
+
+                            if change_code == 'R':
+                                fpath = f"{a_path} -> {b_path}"
+                                change_type = 'renamed:'
+                            elif change_code == 'D':
+                                fpath = a_path
+                                change_type = 'deleted'
+                            elif change_code == 'm':
+                                fpath = a_path
+                                change_type = 'modified'
+                            else:
+                                fpath = a_path
+                                change_type = 'new file'
+
+                            file_template_mapping['change_type'] = self.format_value_text(
+                                value=change_type,
+                                style=style
+                            )
+                            file_template_mapping['filepath'] = self.format_value_text(
+                                value=fpath,
+                                style=style
+                            )
+                            f_t = file_template.safe_substitute(file_template_mapping)
+                            changed_files.append(f_t)
+
+                        state_mapping['changed_files'] = '\n'.join(changed_files)
+                        full_state_template = state_template.safe_substitute(
+                            state_mapping
+                        )
+                        full_state_templates.append(full_state_template)
+                        template_mapping['change_states'] = '\n'.join(full_state_templates)
+
+            template_mapping['repo_name'] = self.format_value_text(
+                value=basename(repo_path),
+                style=('bold', name_color)
+            )
+            full_repo_template = template.safe_substitute(template_mapping)
+            full_repo_templates.append(full_repo_template)
+        return full_repo_templates, n_good, n_bad
 
     def display(self):
         # print the full output to the screen
         print(self.full_template)
-
-
-
-
-
-# # change_codes = {
-# #     'A': 'new file',
-# #     'D': 'deleted',
-# #     'R': 'renamed',
-# #
-# # }

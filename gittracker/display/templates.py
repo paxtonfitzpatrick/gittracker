@@ -25,16 +25,16 @@ ${repo_name}
 )
 
 # single-repository template: verbosity level 2
-# this one has to be constructed somewhat indirectly in order to accommodate
-# different possible states of the repository (e.g., presence or lack of
-# staged/unstaged changes). `file_states` gets filled by instances of
+# Note: this one has to be constructed somewhat indirectly in order to
+# accommodate different possible states of the repository (e.g., presence or
+# lack of staged/unstaged changes). `file_states` gets filled by instances of
 # `SINGLE_CHANGE_STATE` (if any)
 SINGLE_REPO_V2 = Template(
 """\
 ${repo_name}
     ${repo_path}
     on branch ${local_branch}: ${compared_to_remote} ${remote_branch}
-    ${file_states}
+    ${change_states}
 """
 )
 
@@ -49,7 +49,7 @@ ${n_changed} ${change_state_msg}:
 )
 
 # format skeleton for a single modified file in verbosity level 2
-SINGLE_FILE_CHANGE = Template("${change_type}: ${filepath}")
+SINGLE_FILE_CHANGE = Template("${change_type}:   ${filepath}")
 
 # replacement skeleton for repositories in detached HEAD states for verbosity
 # levels 1 & 2
@@ -60,7 +60,6 @@ ${repo_name}
     ${detached_head_msg}
 """
 )
-
 
 # mapping of single repository templates by verbosity value
 REPO_TEMPLATES = {
