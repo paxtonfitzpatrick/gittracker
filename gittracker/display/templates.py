@@ -53,7 +53,7 @@ SINGLE_FILE_CHANGE = Template("${change_type}: ${filepath}")
 
 # replacement skeleton for repositories in detatched HEAD states for verbosity
 # levels 1 & 2
-SINGLE_REPO_DETATCHED = Template(
+SINGLE_REPO_DETACHED = Template(
 """\
 ${repo_name}
     ${repo_path}

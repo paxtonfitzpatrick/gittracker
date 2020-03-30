@@ -6,7 +6,7 @@ from .templates import (
     REPO_TEMPLATES,
     SINGLE_CHANGE_STATE,
     SINGLE_FILE_CHANGE,
-    SINGLE_REPO_DETATCHED
+    SINGLE_REPO_DETACHED
 )
 from ..util.util import get_display_width
 
@@ -152,7 +152,7 @@ class Displayer:
             name_color = 'red'
             if isinstance(repo_status, str):
                 # HEAD is detatched, use alternate template...
-                template = SINGLE_REPO_DETATCHED
+                template = SINGLE_REPO_DETACHED
                 template_mapping['detatched_head_msg'] = self.format_value_text(
                     value=repo_status,
                     style='red'
@@ -214,11 +214,12 @@ class Displayer:
 
     def _format_v2(self):
         # formatting function for verbosity level 2
+
         return
 
     def display(self):
         # print the full output to the screen
-        print(self.filled_template)
+        print(self.full_template)
 
 
 
