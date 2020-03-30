@@ -1,9 +1,9 @@
+import os
 from datetime import datetime as dt
 from functools import wraps
-from os import listdir
-from os.path import isdir, realpath, join as opj
+from os.path import expanduser, expandvars, isdir, realpath, join as opj
 from pathlib import Path
-from sys import exit
+from sys import exit, platform
 from traceback import print_exception
 from .exceptions import BugIdentified, RepoNotFoundError, NoGitdirError
 
@@ -12,6 +12,22 @@ GITHUB_URL = "https://github.com/paxtonfitzpatrick/gittracker/issues/new"
 BUG_MSG = "\n\nUh oh! Looks like you might have encountered a bug, please " \
           f"consider posting an issue at:\n\t{GITHUB_URL}\nincluding the " \
           f"contents of the logfile, found at:\n\t{LOGFILE_PATH}"
+
+
+def cleanpath(path):
+    return realpath(expanduser(expandvars(path)))
+
+
+def clear_display():
+    if is_windows():
+        os.system('cls')
+    else:
+        os.system('clear')
+
+
+
+def is_windows():
+    return platform == 'win32'
 
 
 def log_error(func=None, show=False):
@@ -106,9 +122,12 @@ def prompt_input(prompt, default=None, possible_bug=False):
 
 
 def validate_repo(repo_path):
+    cleaned_path = cleanpath(repo_path)
     # check directory exists
     if not isdir(repo_path):
         raise RepoNotFoundError(repo_path)
     # check that directory is a git repository
-    if '.git' not in listdir(repo_path):
+    if '.git' not in os.listdir(repo_path):
         raise NoGitdirError(repo_path)
+
+    return cleaned_path
