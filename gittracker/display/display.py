@@ -1,3 +1,4 @@
+from os.path import basename
 from .ascii import LOGO
 from .templates import (
     ANSI_SEQS,
@@ -32,11 +33,11 @@ class Displayer:
         self.display_width = get_display_width()
 
         if self.verbosity == 0:
-            self.format_func = self._format_v0
+            self.repo_format_func = self._format_v0
         elif self.verbosity == 1:
-            self.format_func = self._format_v1
+            self.repo_format_func = self._format_v1
         else:
-            self.format_func = self._format_v2
+            self.repo_format_func = self._format_v2
 
         # completed outer template to display
         self.full_template = None
@@ -50,7 +51,7 @@ class Displayer:
 
     def format_display(self):
         # fill individual repo templates
-        full_repo_templates, n_good, n_bad = self.format_func()
+        full_repo_templates, n_good, n_bad = self.repo_format_func()
         n_total = n_good + n_bad
         # handle two (probably rare) cases
         if n_bad == 0:
@@ -119,15 +120,24 @@ class Displayer:
         return f"{style_code}{value}{reset_code}"
 
     def _format_v0(self):
-        filled_repo_templates = []
-
-
-        for repo in self.repos:
-
-
-
-        # formatting function for verbosity level 0
-        pass
+        # repo status formatting function called if self.verbosity == 0
+        full_repo_templates = []
+        n_good = 0
+        n_bad = 0
+        for repo_path, repo_status in self.repos.items():
+            repo_name = basename(repo_path)
+            if isinstance(repo_status, (str, dict)):
+                # if the HEAD is either dirty or detatched
+                style = 'red'
+                n_bad += 1
+            else:
+                style = 'green'
+                n_good += 1
+            repo_name_fmt = self.format_value_text(value=repo_name, style=style)
+            template_mapping = {'repo_name': repo_name_fmt}
+            full_repo_templates = self.repo_template.safe_substitute(template_mapping)
+            full_repo_templates.append(full_repo_templates)
+        return full_repo_templates, n_good, n_bad
 
     def _format_v1(self):
         # formatting function for verbosity level 1
