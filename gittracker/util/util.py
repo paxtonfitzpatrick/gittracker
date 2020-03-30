@@ -3,7 +3,6 @@ from functools import wraps
 from os import listdir
 from os.path import isdir, realpath, join as opj
 from pathlib import Path
-from shutil import get_terminal_size
 from sys import exit
 from traceback import print_exception
 from .exceptions import BugIdentified, RepoNotFoundError, NoGitdirError
@@ -13,10 +12,6 @@ GITHUB_URL = "https://github.com/paxtonfitzpatrick/gittracker/issues/new"
 BUG_MSG = "\n\nUh oh! Looks like you might have encountered a bug, please " \
           f"consider posting an issue at:\n\t{GITHUB_URL}\nincluding the " \
           f"contents of the logfile, found at:\n\t{LOGFILE_PATH}"
-
-
-def get_display_width():
-    return get_terminal_size().columns
 
 
 def log_error(func=None, show=False):

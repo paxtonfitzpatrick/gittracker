@@ -1,4 +1,5 @@
 from os.path import basename
+from shutil import get_terminal_size
 from .ascii import LOGO
 from .templates import (
     ANSI_SEQS,
@@ -8,7 +9,6 @@ from .templates import (
     SINGLE_FILE_CHANGE,
     SINGLE_REPO_DETACHED
 )
-from ..util.util import get_display_width
 
 
 class Displayer:
@@ -32,7 +32,6 @@ class Displayer:
         self.repo_template = REPO_TEMPLATES[self.verbosity]
         self.ansi_seqs = ANSI_SEQS
         self.logo = LOGO
-        self.display_width = get_display_width()
 
         if self.verbosity == 0:
             self.repo_format_func = self._format_v0
@@ -49,6 +48,10 @@ class Displayer:
         self.full_state_templates = None
         # stores filled `SINGLE_FILE_CHANGE` templates if self.verbosity == 2
         self.full_file_templates = None
+
+    @property
+    def display_width(self):
+        return get_terminal_size().columns
 
     def format_display(self):
         # fill individual repo templates
@@ -89,7 +92,7 @@ class Displayer:
             'pkg_ascii_logo': self.logo,
             'n_repos_tracked': self.format_value_text(value=n_total, style='bold'),
             'summary_msg': summary_msg_fmt,
-            'line_sep': '=' * get_display_width(),
+            'line_sep': '=' * self.display_width,
             'repos_status': '\n'.join(full_repo_templates)
         }
         self.full_template = self.outer_template.safe_substitute(template_mapping)
