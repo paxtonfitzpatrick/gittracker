@@ -18,7 +18,7 @@ from ..util.util import (
 )
 
 
-KNOWN_REPOS_FPATH = opj(Path(__file__).parents[1], 'log', 'known-repos')
+TRACKED_REPOS_FPATH = opj(Path(__file__).parents[1], 'log', 'tracked-repos')
 
 
 @log_error(show=True)
@@ -96,8 +96,8 @@ def auto_find_repos(
     if n_found == 0:
         exit(f"\033[31mNo repositories found\033[0m under {toplevel_dir}.\n"
               "If you think GitTracker missed something, you can try manually "
-              "adding repositories with:\n\t`gittracker add repo/path/one "
-              "repo/path/two ...\nAlso please consider posting an issue at:\n\t"
+              "adding repositories with:\n\t`gittracker add repo/one/path "
+              "repo/two/path ...\nAlso please consider posting an issue at:\n\t"
               f"{GITHUB_URL}")
     else:
         print(f"\033[32mfound {n_found} git repositories:\033[0m", end='\n\t')
@@ -108,15 +108,15 @@ def auto_find_repos(
             possible_bug=True
         )
         if add_confirmed:
-            with open(KNOWN_REPOS_FPATH, 'a') as f:
+            with open(TRACKED_REPOS_FPATH, 'a') as f:
                 f.write('\n'.join(repos_found))
             exit(f"\033[32mGitTracker: {n_found} repositories stored for "
-                 f"tracking in logfile at {KNOWN_REPOS_FPATH}\033[0m")
+                 f"tracking in logfile at {TRACKED_REPOS_FPATH}\033[0m")
 
 
 def load_tracked_repos():
-    # loads in known-repos file as a list of paths (strings)
-    with open(KNOWN_REPOS_FPATH, 'r') as f:
+    # loads in tracked-repos file as a list of paths (strings)
+    with open(TRACKED_REPOS_FPATH, 'r') as f:
         paths = f.read().splitlines()
     return paths
 
@@ -143,20 +143,20 @@ def manual_add(repo_path):
             # don't add a duplicate if the repository is already being tracked
             exit(f"\033[31m{full_path} is already tracked by GitTracker\033[0m")
         else:
-            with open(KNOWN_REPOS_FPATH, 'a') as f:
+            with open(TRACKED_REPOS_FPATH, 'a') as f:
                 f.write(f"{full_path}\n")
             exit(f"GitTracker: repository '{basename(full_path)}' stored for "
-                 f"tracking in logfile at {KNOWN_REPOS_FPATH}")
+                 f"tracking in logfile at {TRACKED_REPOS_FPATH}")
 
 
 def manual_remove(repo_path):
     # manually remove a repository from
-    # known-repos file and stop tracking it
+    # tracked-repos file and stop tracking it
     full_path = cleanpath(repo_path)
     tracked_repos = load_tracked_repos()
     try:
         tracked_repos.remove(full_path)
-        with open(KNOWN_REPOS_FPATH, 'w') as f:
+        with open(TRACKED_REPOS_FPATH, 'w') as f:
             f.write('\n'.join(tracked_repos))
             # always leave newline at end for simplicity
             f.write('\n')
@@ -197,7 +197,7 @@ def validate_tracked():
         # remove deleted paths
         for removal in removals:
             tracked_paths.remove(removal)
-        with open(KNOWN_REPOS_FPATH, 'w') as f:
+        with open(TRACKED_REPOS_FPATH, 'w') as f:
             f.write('\n'.join(tracked_paths))
             # always leave newline at end of file for convenience
             f.write('\n')
