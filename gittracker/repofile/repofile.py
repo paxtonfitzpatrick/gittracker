@@ -1,7 +1,8 @@
-from os import getcwd, walk
-from os.path import basename, isdir, join as opj
+from os import getcwd, stat, walk
+from os.path import basename, isdir
 from pathlib import Path
 from sys import exit
+from ..display.ascii import DEFAULT_LOGO
 from ..util.exceptions import (
     BugIdentified,
     GitTrackerError,
@@ -18,7 +19,7 @@ from ..util.util import (
 )
 
 
-TRACKED_REPOS_FPATH = opj(Path(__file__).parents[1], 'log', 'tracked-repos')
+TRACKED_REPOS_FPATH = Path(Path(__file__).resolve().parents[1], 'log', 'tracked-repos')
 
 
 @log_error(show=True)
@@ -126,14 +127,61 @@ def auto_find_repos(
                  f"for tracking in logfile at {TRACKED_REPOS_FPATH}\033[0m")
 
 
-def initialize_file(ask_first=False):
-    prompt = ""
+def manual_init():
+    print(DEFAULT_LOGO)
+    _initialize_file(internal=False)
 
 
-def load_tracked_repos():
+def _initialize_file(internal=True):
+    if internal:
+        print("GitTracker isn't currently tracking any repositories")
+
+    prompt = "Would you like to initialize GitTracker by:\n - [a]utomatically " \
+             "searching for local repositories? Or\n - [m]anually entering " \
+             "repository paths?\n(enter 'q' to quit)\n[a/m/q]\n"
+    response = input(prompt).lower()
+    while True:
+        if response == 'q':
+            exit()
+
+        elif response == 'a':
+            toplevel_dir = input("Enter the path to the outermost directory "
+                                 "you'd like to search under\n")
+            while True:
+                if toplevel_dir == 'q':
+                    return
+
+                auto_find_repos(toplevel_dir)
+                toplevel_dir = input("Enter another directory to search under, "
+                                     "or 'q' if you're done\n")
+
+        elif response == 'm':
+            repo_path = input("Enter the path to a repository you'd like to track\n")
+            while True:
+                if repo_path == 'q':
+                    return
+
+                manual_add(repo_path)
+                repo_path = input("Enter another repository path, or 'q' if "
+                                  "you're done\n")
+
+
+def load_tracked_repos(init_on_fail=True):
     # loads in tracked-repos file as a list of paths (strings)
-    with open(TRACKED_REPOS_FPATH, 'r') as f:
-        paths = f.read().splitlines()
+    # situation-dependent, either prompts to initialize file
+    # or returns an empty list
+    try:
+        with open(TRACKED_REPOS_FPATH, 'r') as f:
+            paths = f.read().splitlines()
+            assert len(paths) > 0
+    except (AssertionError, FileNotFoundError):
+        if init_on_fail:
+            _initialize_file()
+            with open(TRACKED_REPOS_FPATH, 'r') as f:
+                paths = f.read().splitlines()
+        else:
+            paths = []
+
     return paths
 
 
@@ -155,9 +203,9 @@ def manual_add(repo_path):
         valid = prompt_input(prompt, default='no')
 
     if valid:
-        if full_path in load_tracked_repos():
+        if full_path in load_tracked_repos(init_on_fail=False):
             # don't add a duplicate if the repository is already being tracked
-            exit(f"\033[31m{full_path} is already tracked by GitTracker\033[0m")
+            print(f"\033[31m{full_path} is already tracked by GitTracker\033[0m")
         else:
             with open(TRACKED_REPOS_FPATH, 'a') as f:
                 f.write(f"{full_path}\n")
@@ -169,7 +217,7 @@ def manual_remove(repo_path):
     # manually remove a repository from
     # tracked-repos file and stop tracking it
     full_path = cleanpath(repo_path)
-    tracked_repos = load_tracked_repos()
+    tracked_repos = load_tracked_repos(init_on_fail=False)
     try:
         tracked_repos.remove(full_path)
         with open(TRACKED_REPOS_FPATH, 'w') as f:
@@ -187,7 +235,7 @@ def show_tracked(quiet=False):
     # repositories to the screen. If quiet
     # is True, show directory names only.
     # Otherwise, show full paths.
-    tracked = load_tracked_repos()
+    tracked = load_tracked_repos(init_on_fail=True)
     if quiet:
         tracked = list(map(lambda p: basename(p), tracked))
     print(
@@ -218,7 +266,7 @@ def validate_tracked():
             # always leave newline at end of file for convenience
             f.write('\n')
 
-    tracked = load_tracked_repos()
+    tracked = load_tracked_repos(init_on_fail=False)
     # list of tuples (old path, new path)
     to_replace = []
     # list of paths to be removed
