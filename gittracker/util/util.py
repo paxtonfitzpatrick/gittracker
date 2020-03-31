@@ -26,7 +26,7 @@ def clear_display():
 
 
 def is_windows():
-    return platform == 'win32'
+    return platform.startswith('win')
 
 
 def log_error(func=None, show=False):
