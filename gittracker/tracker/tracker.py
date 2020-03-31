@@ -21,7 +21,7 @@ def get_status(repo_paths, verbose=2, follow_submodules=0):
             a dictionary of {path: changes} for each local
             repository (in `repo_paths`). Otherwise, it will
             be a dict of set keys whose values depends on the
-            verbosity level. Note: if repository is fully
+            `verbose` value. Note: if repository is fully
             up-to-date, `changes` is None. Or, if repository
             is in a detached HEAD state, `changes` will be
             a string instead.
@@ -64,7 +64,7 @@ def _single_repo_status(repo, verbose, follow_submodules):
             {field: info} pairs.  Fields (keys) are sufficient
             to create a "git-status"-like output for a
             repository, though many are set to None at lower
-            verbosity levels
+            `verbose` values
     """
     # TODO (future): option to get info about branches other than current
     status = {
@@ -158,7 +158,7 @@ def _submodule_status(submodule, depth=1):
     """
     # TODO: Function needs testing
     # TODO: once expandable GUI view is finished, can allow variable verbosity.
-    #  For now, pinning to 1 regardless of parent verbosity levels
+    #  For now, pinning to 1 regardless of parent `verbose` value
     try:
         submodule_repo = submodule.module()
         sm_status = _single_repo_status(
