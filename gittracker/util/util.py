@@ -1,13 +1,13 @@
 import os
 from datetime import datetime as dt
 from functools import wraps
-from os.path import expanduser, expandvars, isdir, realpath, join as opj
+from os.path import expanduser, expandvars, isdir, realpath
 from pathlib import Path
 from sys import exit, platform
 from traceback import print_exception
 from .exceptions import BugIdentified, RepoNotFoundError, NoGitdirError
 
-LOGFILE_PATH = opj(Path(__file__).parents[1], 'log', 'logfile')
+LOGFILE_PATH = Path(Path(__file__).parents[1], 'log', 'logfile')
 GITHUB_URL = "https://github.com/paxtonfitzpatrick/gittracker/issues/new"
 BUG_MSG = "\n\nUh oh! Looks like you might have encountered a bug, please " \
           f"consider posting an issue at:\n\t{GITHUB_URL}\nincluding the " \
@@ -106,8 +106,8 @@ def prompt_input(prompt, default=None, possible_bug=False):
                         "(or 'n')\n"
 
     opts = f"[{opts}]"
+    response = input(f"{prompt}\n{opts}\n").lower()
     while True:
-        response = input(f"{prompt}\n{opts}\n").lower()
         # if user hits return without typing, return default response
         if (default is not None) and (not response):
             return valid_responses[default]
@@ -116,7 +116,7 @@ def prompt_input(prompt, default=None, possible_bug=False):
         elif possible_bug and response == 'b':
             raise BugIdentified
         else:
-            print(bad_input_msg)
+            response = input(bad_input_msg)
 
 
 def validate_repo(repo_path):
