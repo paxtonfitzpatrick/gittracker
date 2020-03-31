@@ -1,7 +1,7 @@
 from git import Repo, InvalidGitRepositoryError
 
 
-def get_status(repo_paths, verbose=2, follow_submodules=0):
+def get_status(repo_paths, verbose=1, follow_submodules=0):
     """
     Determines "git-status"-like information for a set of
     git repositories based on their (absolute) `repo_paths`.
