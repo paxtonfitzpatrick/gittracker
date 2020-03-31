@@ -29,6 +29,7 @@ def auto_find_repos(
         quiet=False,
         permission_err='show'
 ):
+    already_tracked = load_tracked_repos()
     # default to searching under current working directory
     if toplevel_dir is None:
         toplevel_dir = getcwd()
@@ -36,6 +37,8 @@ def auto_find_repos(
     toplevel_dir = cleanpath(toplevel_dir)
     if not isdir(toplevel_dir):
         exit(f"{toplevel_dir} does not appear to be a directory")
+    elif toplevel_dir in already_tracked:
+        exit(f"already tracking top-level directory: {toplevel_dir}")
 
     # prioritize `quiet` arg over permission_err (`quiet=True` silences OSErrors)
     if quiet:
@@ -49,8 +52,8 @@ def auto_find_repos(
     elif permission_err == 'raise':
         def _onerr_func(e): raise e
     else:
-        raise ValueError("permission_err must be one of: 'ignore', 'show', or "
-                         f"'raise'. Got {permission_err}")
+        raise exit("permission_err must be one of: 'ignore', 'show', or "
+                   f"'raise'. Got {permission_err}")
 
     if ignore_hidden:
         if basename(toplevel_dir).startswith('.'):
@@ -78,11 +81,17 @@ def auto_find_repos(
 
     # walk directory structure from outermost level
     repos_found = []
-    print("searching for git repositories...")
-    for dirpath, dirs, files in walk(toplevel_dir):
+    if not quiet:
+        print("searching for git repositories...")
+    for dirpath, dirs, files in walk(toplevel_dir, onerror=_onerr_func):
         print(f"{len(repos_found)} repositories found", end='\r')
         # if the directory contains a .git folder, we're probably found one
         if '.git' in dirs:
+            if dirpath in already_tracked:
+                # skip previously added repos and their subdirectories
+                print(f"skipping {dirpath} (already tracked)")
+                dirs[:] = []
+                continue
             if not quiet:
                 print(dirpath)
             repos_found.append(dirpath)
@@ -94,24 +103,31 @@ def auto_find_repos(
     clear_display()
     n_found = len(repos_found)
     if n_found == 0:
-        exit(f"\033[31mNo repositories found\033[0m under {toplevel_dir}.\n"
-              "If you think GitTracker missed something, you can try manually "
-              "adding repositories with:\n\t`gittracker add repo/one/path "
-              "repo/two/path ...\nAlso please consider posting an issue at:\n\t"
-              f"{GITHUB_URL}")
+        exit("\033[31mNo untracked repositories found\033[0m under "
+             f"{toplevel_dir}.\nIf you think GitTracker missed something, you "
+             "can try manually adding repositories with:\n\t`gittracker add "
+             "repo/one/path repo/two/path ...\nAlso please consider posting an "
+             f"issue at:\n\t{GITHUB_URL}")
     else:
-        print(f"\033[32mfound {n_found} git repositories:\033[0m", end='\n\t')
+        suff1, suff2 = ('y', 'is') if n_found == 1 else ('ies', 'ese')
+        print(f"\033[32mfound {n_found} git repositor{suff1}:\033[0m", end='\n\t')
         print('\n\t'.join(repos_found))
         add_confirmed = prompt_input(
-            "Do you want GitTraacker to track these repositories?",
+            f"Do you want GitTracker to track th{suff2} repositor{suff1}?",
             default='yes',
             possible_bug=True
         )
         if add_confirmed:
             with open(TRACKED_REPOS_FPATH, 'a') as f:
                 f.write('\n'.join(repos_found))
-            exit(f"\033[32mGitTracker: {n_found} repositories stored for "
-                 f"tracking in logfile at {TRACKED_REPOS_FPATH}\033[0m")
+                # always leave newline at end for simplicity
+                f.write('\n')
+            exit(f"\033[32mGitTracker: {n_found} new repositor{suff1} stored "
+                 f"for tracking in logfile at {TRACKED_REPOS_FPATH}\033[0m")
+
+
+def initialize_file(ask_first=False):
+    prompt = ""
 
 
 def load_tracked_repos():
@@ -145,8 +161,8 @@ def manual_add(repo_path):
         else:
             with open(TRACKED_REPOS_FPATH, 'a') as f:
                 f.write(f"{full_path}\n")
-            exit(f"GitTracker: repository '{basename(full_path)}' stored for "
-                 f"tracking in logfile at {TRACKED_REPOS_FPATH}")
+            print(f"GitTracker: repository '{basename(full_path)}' stored for "
+                  f"tracking in logfile at {TRACKED_REPOS_FPATH}")
 
 
 def manual_remove(repo_path):
