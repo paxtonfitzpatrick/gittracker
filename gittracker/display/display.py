@@ -1,6 +1,6 @@
 from os.path import basename
 from shutil import get_terminal_size
-from .ascii import LOGO
+from .ascii import RANDOM_LOGO
 from .templates import (
     ANSI_SEQS,
     OUTER_TEMPLATE,
@@ -12,7 +12,7 @@ from .templates import (
 
 
 class Displayer:
-    def __init__(self, repos, verbose):
+    def __init__(self, repos, verbose=1):
         """
         Class that handles formatting and displaying information
         for tracked repositories according to the given
@@ -22,7 +22,7 @@ class Displayer:
                 `changes` typically contains "git-status"-like
                 information. See `gittracker.tracker.tracker` for
                 further details
-        :param verbose: int {0, 1, 2}
+        :param verbose: int {0, 1, 2} (default: 1)
                 verbosity level of output (0 is least verbose)
         """
         self.repos = repos
@@ -31,7 +31,7 @@ class Displayer:
         self.outer_template = OUTER_TEMPLATE
         self.repo_template = REPO_TEMPLATES[self.verbose]
         self.ansi_seqs = ANSI_SEQS
-        self.logo = LOGO
+        self.logo = RANDOM_LOGO
 
         if self.verbose == 0:
             self.repo_format_func = self._format_v0

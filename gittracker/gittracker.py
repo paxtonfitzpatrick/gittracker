@@ -1,42 +1,28 @@
 #!/usr/bin/env python3
 
+from .display.display import Displayer
+from .repofile.repofile import load_tracked_repos, validate_tracked
 from .tracker.tracker import get_status
-
-def gittracker("kwargs here"):
-    # if logfile of expected locations exists,
-        #  load it in
-    # else
-        # prompt user to run manually input paths and run now
-        #  or run auto-initialization and quit after it's done
-
-    # check that locations exist -- _check_repos_exist
-    # get changes for each
-    # format them for display in terminal window
-    pass
+from .util.util import log_error
 
 
-def _check_repos_exist(repo_paths):
-    """
-    Quick check to make sure provided `repo_paths` A) are
-    directories (i.e., a directory exists at each path)
-    and B) are git repositories (i.e., a `.git` directory
-    exists in each directory).  If a repository doesn't
-    exist at an expected path, prompts the user with a number
-    of options, potentially updating the logfile of known
-    repository locations.
-    :param repo_paths: list (length: number-of-repositories)
-            (absolute) paths to expected repository locations
-    :return: good_paths: list
-            (absolute) paths to confirmed repository locations,
-            potentially with changes to or deletions of items in
-            `repo paths`
-    """
-    pass
-
-
-
+@log_error
+def gittracker(verbose=1, submodules=0):
+    # validate tracked repositories (if any)
+    validate_tracked()
+    # load in tracked repositories (has to be done separately from validation)
+    tracked = load_tracked_repos()
+    # get info for each repository
+    # TODO: how many tracked repositories should be minimum for showing progress bar?
+    status_info = get_status(tracked, verbose=verbose, follow_submodules=submodules)
+    # create Displayer object
+    displayer = Displayer(status_info, verbose=verbose)
+    # format output for terminal window
+    displayer.format_display()
+    # display output
+    displayer.display()
 
 
 if __name__ == "__main__":
     # argparse stuff...
-    gittracker("kwargs here")
+    gittracker()
