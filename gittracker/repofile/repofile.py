@@ -1,4 +1,4 @@
-from os import getcwd, stat, walk
+from os import getcwd, walk
 from os.path import basename, isdir
 from pathlib import Path
 from sys import exit
@@ -10,16 +10,17 @@ from ..util.exceptions import (
     RepoNotFoundError
 )
 from ..util.util import (
+    GITHUB_URL,
+    LOG_DIR,
     cleanpath,
     clear_display,
     log_error,
     prompt_input,
-    GITHUB_URL,
     validate_repo
 )
 
 
-TRACKED_REPOS_FPATH = Path(Path(__file__).resolve().parents[1], 'log', 'tracked-repos')
+TRACKED_REPOS_FPATH = Path(LOG_DIR, 'tracked-repos')
 
 
 @log_error(show=True)
