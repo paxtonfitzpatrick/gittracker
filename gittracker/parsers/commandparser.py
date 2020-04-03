@@ -24,6 +24,8 @@ class CommandParser(ArgumentParser):
         self._default_subcommand = None
         super().__init__(**kwargs)
 
+    # TODO: add custom string help formatting class
+
     @property
     def all_names(self):
         return (self.name, *self.aliases)
@@ -48,7 +50,7 @@ class CommandParser(ArgumentParser):
     def __eq__(self, other):
         return other in self.all_names
 
-    def __call__(self, raw_args):
+    def run(self, raw_args):
         try:
             cmd = raw_args[0]
         except IndexError:
@@ -59,4 +61,4 @@ class CommandParser(ArgumentParser):
                 self.py_function(**vars(parsed_args))
 
         subcmd = self.subcommands[self.subcommands.index(cmd)]
-        subcmd(raw_args[1:])
+        subcmd.run(raw_args[1:])
