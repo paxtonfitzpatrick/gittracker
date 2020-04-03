@@ -120,6 +120,22 @@ def prompt_input(prompt, default=None, possible_bug=False):
             response = input(bad_input_msg)
 
 
+def validate_writable_path(path):
+    # checks that a file path is valid and writable,
+    # and converts it to a pathlib.Path object
+    full_path = Path(cleanpath(path))
+    parent_dir = full_path.parent
+    err_msg = f"unable to write to {full_path}."
+    if not parent_dir.is_dir():
+        exit(f"{err_msg} Parent directory {parent_dir} is not a valid directory")
+    if not os.access(parent_dir, mode=os.W_OK):
+        exit(f"{err_msg} Permission denied for parent directory: {parent_dir}")
+    return full_path
+
+
+
+
+
 def validate_repo(repo_path):
     cleaned_path = cleanpath(repo_path)
     # check directory exists
