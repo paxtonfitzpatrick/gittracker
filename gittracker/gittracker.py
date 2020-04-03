@@ -7,7 +7,7 @@ from .util.util import log_error
 
 
 @log_error
-def gittracker(verbose=1, submodules=0):
+def track(verbose=1, submodules=0):
     # validate tracked repositories (if any)
     validate_tracked()
     # load in tracked repositories (has to be done separately from validation)
