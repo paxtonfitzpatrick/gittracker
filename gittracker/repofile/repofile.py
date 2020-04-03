@@ -25,25 +25,24 @@ TRACKED_REPOS_FPATH = Path(LOG_DIR, 'tracked-repos')
 
 @log_error(show=True)
 def auto_find_repos(
-        toplevel_dir=None,
-        ignore_hidden=True,
+        toplevel_dir,
         ignore_dirs=None,
-        quiet=False,
+        search_hidden=False,
+        verbose=False,
         permission_err='show'
 ):
+    # TODO: add a custom tqdm subclass that
     already_tracked = load_tracked_repos()
-    # default to searching under current working directory
-    if toplevel_dir is None:
-        toplevel_dir = getcwd()
-
+    # defaults to searching under current working directory
     toplevel_dir = cleanpath(toplevel_dir)
     if not isdir(toplevel_dir):
         exit(f"{toplevel_dir} does not appear to be a directory")
     elif toplevel_dir in already_tracked:
         exit(f"already tracking top-level directory: {toplevel_dir}")
 
-    # prioritize `quiet` arg over permission_err (`quiet=True` silences OSErrors)
-    if quiet:
+    # prioritize quiet output arg over permission_err
+    # (`verbose=False` silences OSErrors)
+    if not verbose:
         permission_err = 'ignore'
 
     # set behavior when trying to search directory raises PermissionError
@@ -57,7 +56,7 @@ def auto_find_repos(
         raise exit("permission_err must be one of: 'ignore', 'show', or "
                    f"'raise'. Got {permission_err}")
 
-    if ignore_hidden:
+    if not search_hidden:
         if basename(toplevel_dir).startswith('.'):
             exit("top-level directory cannot be hidden if hidden directories "
                  "are excluded from search")
@@ -83,8 +82,7 @@ def auto_find_repos(
 
     # walk directory structure from outermost level
     repos_found = []
-    if not quiet:
-        print("searching for git repositories...")
+    print("searching for git repositories...")
     for dirpath, dirs, files in walk(toplevel_dir, onerror=_onerr_func):
         print(f"{len(repos_found)} repositories found", end='\r')
         # if the directory contains a .git folder, we're probably found one
@@ -94,7 +92,7 @@ def auto_find_repos(
                 print(f"skipping {dirpath} (already tracked)")
                 dirs[:] = []
                 continue
-            if not quiet:
+            if verbose:
                 print(dirpath)
             repos_found.append(dirpath)
             # don't recurse further into identified git repositories
