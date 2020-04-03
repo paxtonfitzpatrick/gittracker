@@ -21,8 +21,3 @@ def gittracker(verbose=1, submodules=0):
     displayer.format_display()
     # display output
     displayer.display()
-
-
-if __name__ == "__main__":
-    # argparse stuff...
-    gittracker()
