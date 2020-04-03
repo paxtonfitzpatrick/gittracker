@@ -3,13 +3,13 @@ from os.path import basename, isdir
 from pathlib import Path
 from sys import exit
 from ..display.ascii import DEFAULT_LOGO
-from ..util.exceptions import (
+from ..utils.exceptions import (
     BugIdentified,
     GitTrackerError,
     NoGitdirError,
     RepoNotFoundError
 )
-from ..util.util import (
+from ..utils.utils import (
     GITHUB_URL,
     LOG_DIR,
     cleanpath,

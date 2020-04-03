@@ -19,6 +19,10 @@ class CommandParser(ArgumentParser):
         elif not hasattr(subcommands, '__iter__'):
                 subcommands = [subcommands]
         self.subcommands = subcommands
+        # if a short description isn't provided,
+        # use the default description (if that was provided)
+        if short_description is None:
+            short_description = kwargs.get('description')
         self.short_description = short_description
         self.subcommand_parsers = None
         self._default_subcommand = None

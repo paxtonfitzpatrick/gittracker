@@ -3,7 +3,7 @@ import sys
 from gittracker import __version__
 from gittracker.parsers.commandparser import CommandParser
 from gittracker.parsers.subcommands import SUBCOMMANDS
-from gittracker.util.util import LOG_DIR
+from gittracker.utils.utils import LOG_DIR
 
 DEFAULT_COMMAND = 'status'
 VERSION_FMT = f"GitTracker version: {__version__}"
