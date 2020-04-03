@@ -127,6 +127,10 @@ def auto_find_repos(
 
 
 def manual_init():
+    already_tracked = load_tracked_repos(init_on_fail=False)
+    if len(already_tracked) > 0:
+        exit("GitTracker has already been initialized. To track new "
+             "repositories, run `gittracker add` or `gittracker find`")
     print(DEFAULT_LOGO)
     _initialize_file(internal=False)
 
@@ -212,21 +216,41 @@ def manual_add(repo_path):
                   f"tracking in logfile at {TRACKED_REPOS_FPATH}")
 
 
-def manual_remove(repo_path):
+def manual_remove(repo_paths, confirm=True):
     # manually remove a repository from
     # tracked-repos file and stop tracking it
-    full_path = cleanpath(repo_path)
     tracked_repos = load_tracked_repos(init_on_fail=False)
-    try:
-        tracked_repos.remove(full_path)
-        with open(TRACKED_REPOS_FPATH, 'w') as f:
-            f.write('\n'.join(tracked_repos))
-            # always leave newline at end for simplicity
-            f.write('\n')
-    except ValueError:
-        exit(f"\033[31m{full_path} is not currently tracked by GitTracker.\033[0m"
-             "\nYou can view the currently tracked repositories with:"
-             "\n\tgittracker ls")
+    removed = []
+    for repo_path in repo_paths:
+        full_path = cleanpath(repo_path)
+        try:
+            tracked_repos.remove(full_path)
+            # get confirmation after removing the entry from the list (but before
+            # updating the file) so the "not currently tracked" message takes precedent
+            if confirm:
+                prompt = f"are you sure you want to stop tracking {full_path}?"
+                confirmed = prompt_input(prompt, default='no')
+            else:
+                confirmed = True
+
+            if confirmed:
+                with open(TRACKED_REPOS_FPATH, 'w') as f:
+                    f.write('\n'.join(tracked_repos))
+                    # always leave newline at end for simplicity
+                    f.write('\n')
+                removed.append(repo_path)
+            else:
+                print(f"{full_path} not removed")
+        except ValueError:
+            print(f"\033[31m{full_path} is not currently tracked by GitTracker."
+                  "\033[0m\nYou can view the currently tracked repositories "
+                  "with:\n\tgittracker ls")
+
+    if any(removed):
+        removed_fmt = '\n\t'.join(removed)
+        print(f"GitTracker will no longer track:\n\t\033[32m{removed_fmt}\033[0m")
+    else:
+        exit(1)
 
 
 def show_tracked(quiet=False):
