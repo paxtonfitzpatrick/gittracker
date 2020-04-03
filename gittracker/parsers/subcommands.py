@@ -2,17 +2,10 @@ from .commandparser import CommandParser
 from ..gittracker import track
 from ..repofile.repofile import auto_find_repos, manual_init, manual_add, manual_remove, show_tracked
 
-
-def _track_wrapper(verbose, submodules):
-    # wrapper around track function to allow a non-zero
-    # default verbosity with argparse's "count" action
-    _verbose = 1 if verbose is None else verbose
-    track(verbose=_verbose, submodules=submodules)
-
 status_parser = CommandParser(
     name='status',
     aliases=['track', 'show'],
-    py_function=_track_wrapper,
+    py_function=track,
     description='show "git-status"-like output for each tracked repository',
     short_description='show the states of tracked repositories [default command]'
 )
@@ -28,5 +21,22 @@ status_parser.add_argument(
     '--submodules',
     default=0,
     type=int,
-    help='maximum recursion depth for analyzing nested submodules. 0 ignores all submodules, 1 includes only the '
+    help="maximum recursion depth for analyzing nested submodules. 0 [default] "
+         "ignores all submodules, 1 includes only the outer repository's "
+         "submodules, etc. NOTE: this option only applies to verbosity level 3."
 )
+status_parser.add_argument(
+    '--file',
+    '-f',
+    type=str,
+    dest='outfile',
+    help='optional filepath to which the output will be written, rather than stdout'
+)
+status_parser.add_argument(
+    '--plain',
+    action='store_true',
+    help='pass to disable output stylization'
+)
+
+################################################################################
+
