@@ -1,10 +1,16 @@
 from .commandparser import CommandParser
 from ..gittracker import track
-from ..repofile.repofile import auto_find_repos, manual_init, manual_add, manual_remove, show_tracked
+from ..repofile.repofile import (
+    auto_find_repos,
+    manual_add,
+    manual_init,
+    manual_remove,
+    show_tracked
+)
 
 status_parser = CommandParser(
     name='status',
-    aliases=['track', 'show'],
+    aliases='show',
     py_function=track,
     description='show "git-status"-like output for each tracked repository',
     short_description='show the states of tracked repositories [default command]'
@@ -105,3 +111,64 @@ opt_group.add_argument(
 
 ################################################################################
 
+add_parser = CommandParser(
+    name='add',
+    aliases='track',
+    py_function=manual_add,
+    description='add new repositories to GitTracker'
+)
+add_parser.add_argument(
+    'repo-path',
+    nargs='+',
+    help='path(s) to repositories to add'
+)
+
+################################################################################
+
+init_parser = CommandParser(
+    name='init',
+    py_function=manual_init,
+    description='initialize GitTracker for the first time. Using this is '
+                'optional, as the `add` or `find/search` commands will achieve '
+                'the same effect, but `init` will guide you through adding '
+                'manually and/or automatically adding your local repositories '
+                'to the tracker.',
+    short_description='initialize GitTracker for the first time'
+)
+
+################################################################################
+
+remove_parser = CommandParser(
+    name='remove',
+    aliases='rm',
+    py_function=manual_remove,
+    description='',
+    short_description='stop tracking a repository with GitTracker'
+)
+remove_parser.add_argument(
+    'repo-path',
+    nargs='+',
+    help='repository path(s) to stop tracking'
+)
+remove_parser.add_argument(
+    '--yes',
+    '-y',
+    action='store_true',
+    dest='confirm',
+    help='auto-confirm removal of each repository'
+)
+
+################################################################################
+
+list_parser = CommandParser(
+    name='list',
+    aliases='ls',
+    py_function=show_tracked,
+    description='list the currently tracked repositories'
+)
+list_parser.add_argument(
+    '--quiet',
+    '-q',
+    action='store_true',
+    help='show only the repository name rather than the full path'
+)
