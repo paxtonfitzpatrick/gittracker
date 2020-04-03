@@ -133,9 +133,6 @@ def validate_writable_path(path):
     return full_path
 
 
-
-
-
 def validate_repo(repo_path):
     cleaned_path = cleanpath(repo_path)
     # check directory exists
