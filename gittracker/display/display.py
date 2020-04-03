@@ -1,3 +1,4 @@
+import sys
 from os.path import basename
 from shutil import get_terminal_size
 from .ascii import RANDOM_LOGO
@@ -12,7 +13,7 @@ from .templates import (
 
 
 class Displayer:
-    def __init__(self, repos, verbose=1):
+    def __init__(self, repos, verbose=1, outfile=None, plain=False):
         """
         Class that handles formatting and displaying information
         for tracked repositories according to the given
@@ -24,9 +25,17 @@ class Displayer:
                 further details
         :param verbose: int {0, 1, 2} (default: 1)
                 verbosity level of output (0 is least verbose)
+        :param outfile: pathlib.Path (optional)
+                the file to which the output should be written.
+                If None [default], write to sys.stdout with stylized
+                formatting (note: plain text file output is not stylized)
+        :param plain: bool
+                if True, don't color or stylize the displayed output
         """
         self.repos = repos
         self.verbose = verbose
+        self.outfile = outfile
+        self.plain = plain
         self.n_repos = len(self.repos)
         self.outer_template = OUTER_TEMPLATE
         self.repo_template = REPO_TEMPLATES[self.verbose]
@@ -112,6 +121,11 @@ class Displayer:
                 The string-formatted value, surrounded by
                 ANSI escape sequences
         """
+        if self.outfile is not None or self.plain:
+            # skip formatting if not writing to stdout
+            # or non-stylized output was requested
+            return value
+
         reset_code = "\033[0m"
         if style is None:
             ansi_val = 0
@@ -342,5 +356,13 @@ class Displayer:
         return full_repo_templates, n_good, n_bad
 
     def display(self):
-        # print the full output to the screen
-        print(self.full_template)
+        if self.outfile is not None:
+            # either write the output to a file...
+            self.outfile.write_text(self.full_template)
+            confirm_msg = f"GitTracker: output written to file at {self.outfile}"
+            confirm_msg = self.format_value_text(value=confirm_msg, style='green')
+            print(confirm_msg)
+        else:
+            # ...or print it to the screen
+            print(self.full_template)
+
