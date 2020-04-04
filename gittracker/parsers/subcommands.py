@@ -16,8 +16,8 @@ status_parser = CommandParser(
     short_description='show the states of tracked repositories [default command]'
 )
 status_parser.add_argument(
-    '--verbose',
     '-v',
+    '--verbose',
     action='count',
     help='the verbosity level for the output. Level 1 shows minimal condensed '
          'info, level 2 [default] shows some more info, level 3 shows full '
@@ -27,13 +27,14 @@ status_parser.add_argument(
     '--submodules',
     default=0,
     type=int,
+    metavar='DEPTH',
     help="maximum recursion depth for analyzing nested submodules. 0 [default] "
          "ignores all submodules, 1 includes only the outer repository's "
          "submodules, etc. NOTE: this option only applies to verbosity level 3."
 )
 status_parser.add_argument(
-    '--file',
     '-f',
+    '--file',
     type=str,
     dest='outfile',
     help='optional filepath to which the output will be written, rather than stdout'
@@ -73,16 +74,17 @@ opt_group = find_parser.add_argument_group(
     title='optional arguments',
 )
 opt_group.add_argument(
-    '--help',
     '-h',
+    '--help',
     action='help',
     help='show this help message and exit'
 )
 opt_group.add_argument(
-    '--ignore',
     '-i',
+    '--ignore',
     nargs='*',
     dest='ignore_dirs',
+    metavar='dir',
     help='directories to exclude from the search (useful to avoid recursing '
          'into a large directory that contains no git repositories)'
 )
@@ -92,15 +94,14 @@ opt_group.add_argument(
     help='pass to include hidden directories in the search'
 )
 opt_group.add_argument(
-    '--verbose',
     '-v',
+    '--verbose',
     action='store_true',
     help='pass to show live output of directories searched (can be useful for '
          'very large directory structures)'
 )
 opt_group.add_argument(
     '--permission-err',
-    '-p',
     choices=('ignore', 'show', 'raise'),
     help='how to handle read permission errors encountered while walking the '
          'filesystem. "ignore" [default] silently skips direectories with read '
@@ -150,8 +151,8 @@ remove_parser.add_argument(
     help='repository path(s) to stop tracking'
 )
 remove_parser.add_argument(
-    '--yes',
     '-y',
+    '--yes',
     action='store_false',
     dest='confirm',
     help='auto-confirm removal of each repository'
@@ -166,8 +167,8 @@ list_parser = CommandParser(
     description='list the currently tracked repositories'
 )
 list_parser.add_argument(
-    '--quiet',
     '-q',
+    '--quiet',
     action='store_true',
     help='show only the repository name rather than the full path'
 )
