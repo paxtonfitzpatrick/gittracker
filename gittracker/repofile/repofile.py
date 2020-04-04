@@ -137,35 +137,38 @@ def manual_init():
 
 def _initialize_file(internal=True):
     if internal:
-        print("GitTracker isn't currently tracking any repositories")
+        print("\n\033[31mGitTracker isn't currently tracking any "
+              "repositories\033[0m")
 
-    prompt = "Would you like to initialize GitTracker by:\n - [a]utomatically " \
-             "searching for local repositories? Or\n - [m]anually entering " \
-             "repository paths?\n(enter 'q' to quit)\n[a/m/q]\n"
+    prompt = "\nWould you like to initialize GitTracker by:\n " \
+             "- [a]utomatically searching for local repositories?\n " \
+             "- [m]anually entering repository paths?\n" \
+             "(enter 'q' to quit)\n[a/m/q]\n"
     response = input(prompt).lower()
     while True:
         if response == 'q':
             exit()
 
         elif response == 'a':
-            toplevel_dir = input("Enter the path to the outermost directory "
+            toplevel_dir = input("\nEnter the path to the outermost directory "
                                  "you'd like to search under\n")
             while True:
                 if toplevel_dir == 'q':
                     return
 
                 auto_find_repos(toplevel_dir)
-                toplevel_dir = input("Enter another directory to search under, "
-                                     "or 'q' if you're done\n")
+                toplevel_dir = input("\nEnter another directory to search "
+                                     "under, or 'q' if you're done\n")
 
         elif response == 'm':
-            repo_path = input("Enter the path to a repository you'd like to track\n")
+            repo_path = input("\nEnter the path to a repository you'd like to "
+                              "track\n")
             while True:
                 if repo_path == 'q':
                     return
 
                 manual_add(repo_path)
-                repo_path = input("Enter another repository path, or 'q' if "
+                repo_path = input("\nEnter another repository path, or 'q' if "
                                   "you're done\n")
 
 
@@ -189,31 +192,33 @@ def load_tracked_repos(init_on_fail=True):
 
 
 @log_error
-def manual_add(repo_path):
-    full_path = cleanpath(repo_path)
-    try:
-        validate_repo(full_path)
-        valid = True
-    except RepoNotFoundError:
-        # if directory doesn't exist at given path, ask for confirmation
-        prompt = f"{full_path} does not appear to be a directory. Add it " \
-                 "anyway?"
-        valid = prompt_input(prompt, default='no')
-    except NoGitdirError:
-        # if directory exists but isn't a git repository, ask for confirmation
-        prompt = f"{full_path} does not appear to be a git repository. Add " \
-                 "it anyway?"
-        valid = prompt_input(prompt, default='no')
+def manual_add(repo_paths):
+    for repo_path in repo_paths:
+        full_path = cleanpath(repo_path)
+        try:
+            validate_repo(full_path)
+            valid = True
+        except RepoNotFoundError:
+            # if directory doesn't exist at given path, ask for confirmation
+            prompt = f"\n{full_path} does not appear to be a directory. Add " \
+                     "it anyway?"
+            valid = prompt_input(prompt, default='no')
+        except NoGitdirError:
+            # if directory exists but isn't a git repository, ask for confirmation
+            prompt = f"\n{full_path} does not appear to be a git repository. " \
+                     "Add it anyway?"
+            valid = prompt_input(prompt, default='no')
 
-    if valid:
-        if full_path in load_tracked_repos(init_on_fail=False):
-            # don't add a duplicate if the repository is already being tracked
-            print(f"\033[31m{full_path} is already tracked by GitTracker\033[0m")
-        else:
-            with open(TRACKED_REPOS_FPATH, 'a') as f:
-                f.write(f"{full_path}\n")
-            print(f"GitTracker: repository '{basename(full_path)}' stored for "
-                  f"tracking in logfile at {TRACKED_REPOS_FPATH}")
+        if valid:
+            if full_path in load_tracked_repos(init_on_fail=False):
+                # don't add a duplicate if the repository is already being tracked
+                print(f"\n\033[31m{full_path} is already tracked by "
+                      "GitTracker\033[0m")
+            else:
+                with open(TRACKED_REPOS_FPATH, 'a') as f:
+                    f.write(f"{full_path}\n")
+                print(f"\nGitTracker: repository '{basename(full_path)}' "
+                      f"stored for tracking in logfile at {TRACKED_REPOS_FPATH}")
 
 
 def manual_remove(repo_paths, confirm=True):
@@ -225,8 +230,9 @@ def manual_remove(repo_paths, confirm=True):
         full_path = cleanpath(repo_path)
         try:
             tracked_repos.remove(full_path)
-            # get confirmation after removing the entry from the list (but before
-            # updating the file) so the "not currently tracked" message takes precedent
+            # get confirmation after removing the entry from the list (but
+            # before updating the file) so the "not currently tracked" message
+            # takes precedent
             if confirm:
                 prompt = f"are you sure you want to stop tracking {full_path}?"
                 confirmed = prompt_input(prompt, default='no')
@@ -248,7 +254,7 @@ def manual_remove(repo_paths, confirm=True):
 
     if any(removed):
         removed_fmt = '\n\t'.join(removed)
-        print(f"GitTracker will no longer track:\n\t\033[32m{removed_fmt}\033[0m")
+        print(f"GitTracker will no longer track:\n\t{removed_fmt}")
     else:
         exit(1)
 
@@ -262,13 +268,13 @@ def show_tracked(quiet=False):
     if quiet:
         tracked = list(map(lambda p: basename(p), tracked))
     print(
-        f"\033[032mGitTracker: tracking {len(tracked)} repositories:\033[0m",
-        end='\n\t'
+        f"\n\n\033[032mGitTracker: tracking {len(tracked)} repositories:\033[0m",
+        end='\n\n\t'
     )
     print('\n\t'.join(tracked))
 
 
-@log_error
+@log_error(show=True)
 def validate_tracked():
     def _update_repofile(tracked_paths, replacements, removals):
         # helper function that takes care of updating/removing
@@ -299,36 +305,41 @@ def validate_tracked():
             validate_repo(repo_path)
         except GitTrackerError as e:
             if isinstance(e, RepoNotFoundError):
-                error_info = "\033[31mPreviously tracked repository at " \
+                error_info = "\n\033[31mPreviously tracked repository at " \
                              f"{repo_path} appears to no longer exist\033[0m. " \
                              "Has the repository been moved or deleted?"
 
             elif isinstance(e, RepoNotFoundError):
-                error_info = "\033[31mPreviously tracked directory at " \
+                error_info = "\n\033[31mPreviously tracked directory at " \
                              f"{repo_path} appears to no longer be a git " \
-                             "repository (no .git directory found)\033[0m/. " \
+                             "repository (no .git directory found)\033[0m. " \
                              "Has the repository been moved or deleted?"
             else:
-                # unexpected exception - should never get here, but it's a failsafe
+                # unexpected exception occurred -- theoretically should never
+                # get here, but works as a failsafe
                 _update_repofile(tracked, to_replace, to_remove)
                 raise e
 
-            options_info = "- Enter 'u' to update the repository's path\n" \
-                           "- Enter 'd' to stop tracking the repository\n" \
-                           "- Enter 'b' if you think you've encountered a bug " \
-                           "in GitTracker\n- Enter 'q' to quit\n"
+            options_info = "- Enter 'u' to update the repository's path\n\t" \
+                           "- Enter 'd' to stop tracking the repository\n\t" \
+                           "- Enter 'b' if you think you've encountered a " \
+                           "bug in GitTracker\n\t" \
+                           "- Enter 'q' to quit"
             options = '[u/d/b/q]'
-            response = input(f"{error_info}\n{options_info}\{options}\n").lower()
+            response = input(
+                f"{error_info}\n\n\t{options_info}\n\n{options}\n"
+            ).lower()
             while True:
                 if response == 'u':
-                    update_prompt = f"please enter the updated path for {repo_path}\n"
+                    update_prompt = "\nplease enter the updated path for " \
+                                    f"{repo_path}"
                     input_path = input(update_prompt)
                     full_path = cleanpath(input_path)
                     try:
                         validate_repo(full_path)
                         replace_confirmed = True
                     except RepoNotFoundError:
-                        override_prompt = f"{full_path} does not appear to " \
+                        override_prompt = f"\n{full_path} does not appear to " \
                                           "be a directory. Add it anyway?"
                         replace_confirmed = prompt_input(
                             override_prompt,
@@ -336,7 +347,7 @@ def validate_tracked():
                             possible_bug=True
                         )
                     except NoGitdirError:
-                        override_prompt = f"{full_path} does not appear to " \
+                        override_prompt = f"\n{full_path} does not appear to " \
                                           "be a git repository. Add it anyway?"
                         replace_confirmed = prompt_input(
                             override_prompt,
@@ -347,7 +358,7 @@ def validate_tracked():
                         to_replace.append((repo_path, full_path))
                         break
                 elif response == 'd':
-                    delete_prompt = f"stop tracking {repo_path}?"
+                    delete_prompt = f"\nstop tracking {repo_path}?"
                     delete_confirmed = prompt_input(delete_prompt, default='no')
                     if delete_confirmed:
                         to_remove.append(repo_path)
@@ -355,14 +366,20 @@ def validate_tracked():
                 elif response == 'b':
                     _update_repofile(tracked, to_replace, to_remove)
                     raise BugIdentified
-                else:
-                    # remaining condition: response == 'q'
+                elif response == 'q':
                     print("exiting...")
                     _update_repofile(tracked, to_replace, to_remove)
-                    exit()
+                    exit(0)
+                else:
+                    # response was not one of the options
+                    not_input_prompt = f"unrecognized option {response}."
+                    response = input(
+                        f"{not_input_prompt}\n\n\t{options_info}\n\n{options}\n"
+                    ).lower()
+                    continue
                 # re-prompt with options if user wants to "go back" (e.g., does
-                # not confirm deletion or update to non-repo directory)
-                response = input(f"{options_info}\n{options}\n").lower()
+                # not confirm deletion or update because they hit the wrong key)
+                response = input(f"\t{options_info}\n\n{options}\n").lower()
 
     # finally, update file with changes (if any) after all are validated
     _update_repofile(tracked, to_replace, to_remove)

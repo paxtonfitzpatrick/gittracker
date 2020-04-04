@@ -11,8 +11,8 @@ LOG_DIR = Path(Path(__file__).resolve().parents[1], 'log')
 LOGFILE_PATH = Path(LOG_DIR, 'logfile')
 GITHUB_URL = "https://github.com/paxtonfitzpatrick/gittracker/issues/new"
 BUG_MSG = "\n\nUh oh! Looks like you might have encountered a bug, please " \
-          f"consider posting an issue at:\n\t{GITHUB_URL}\nincluding the " \
-          f"contents of the logfile, found at:\n\t{LOGFILE_PATH}"
+          f"consider posting an issue at:\n\t{GITHUB_URL}\n\nwith the " \
+          f"contents of the logfile, found at:\n\t{LOGFILE_PATH}\n\n"
 
 
 def cleanpath(path):
@@ -47,14 +47,15 @@ def log_error(func=None, show=False):
             try:
                 return func(*args, **kwargs)
             except Exception as e:
+                tb = e.__traceback__
                 curr_time = dt.now().ctime()
                 with open(LOGFILE_PATH, 'a') as logfile:
                     # logfile formatting for readability
                     logfile.write(f"{curr_time}\n\n")
-                    print_exception(type(e), e, tb=None, file=logfile)
+                    print_exception(type(e), e, tb=tb, file=logfile)
                     logfile.write(f"\n\n{'='*60}\n\n")
                     if show:
-                        print_exception(type(e), e, tb=None, file=None)
+                        print_exception(type(e), e, tb=tb, file=None)
                     exit(BUG_MSG)
         return wrapper
     # some magic to allow decorator to be used with or without kwargs
@@ -77,6 +78,9 @@ def prompt_input(prompt, default=None, possible_bug=False):
             of options (e.g., "[Y/n]" for default "yes"). If a
             string, must be "yes", "no". If None, user is
             re-prompted to enter a response if one is not given.
+    :param possible_bug: bool
+            if True, an input option is added for the user to
+            identify a bug.
     :return: bool
             True for affirmative response, False for negative
     """
@@ -98,16 +102,17 @@ def prompt_input(prompt, default=None, possible_bug=False):
         opts = "y/N"
 
     if possible_bug:
-        prompt += "\n(if you think you've encountered a bug, please enter 'b')"
+        prompt += "\n(or, if you think you've encountered a bug, please " \
+                  "enter 'b')"
         opts += '/b'
-        bad_input_msg = "Please respond with either 'yes' (or 'y'), 'no' (or " \
-                        "'n'), or 'b' if you think this is a bug\n"
+        bad_input_msg = "Please respond with either 'yes' (or 'y'), 'no' " \
+                        "(or 'n'), or 'b' if you think you've encountered a bug"
     else:
         bad_input_msg = "Please respond with either 'yes' (or 'y') or 'no' " \
-                        "(or 'n')\n"
+                        "(or 'n')"
 
     opts = f"[{opts}]"
-    response = input(f"{prompt}\n{opts}\n").lower()
+    response = input(f"\n{prompt}\n{opts}\n").lower()
     while True:
         # if user hits return without typing, return default response
         if (default is not None) and (not response):
@@ -117,7 +122,7 @@ def prompt_input(prompt, default=None, possible_bug=False):
         elif possible_bug and response == 'b':
             raise BugIdentified
         else:
-            response = input(bad_input_msg)
+            response = input(f"\n{bad_input_msg}\n{opts}\n").lower()
 
 
 def validate_writable_path(path):
@@ -125,11 +130,12 @@ def validate_writable_path(path):
     # and converts it to a pathlib.Path object
     full_path = Path(cleanpath(path))
     parent_dir = full_path.parent
-    err_msg = f"unable to write to {full_path}."
+    err_msg = f"\nunable to write to {full_path}"
     if not parent_dir.is_dir():
-        exit(f"{err_msg} Parent directory {parent_dir} is not a valid directory")
+        exit(f"\033[31m{err_msg}\ndirectory {parent_dir} does not exist\033[0m")
     if not os.access(parent_dir, mode=os.W_OK):
-        exit(f"{err_msg} Permission denied for parent directory: {parent_dir}")
+        exit(f"\033[31m{err_msg}\nlacking write permission for parent "
+             f"directory: {parent_dir}\033[0m")
     return full_path
 
 
