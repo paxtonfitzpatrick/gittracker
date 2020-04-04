@@ -1,8 +1,11 @@
 # Mac Finder display config
 *.DS_Store
 
-# bytecode dirs
+# bytecode
 *__pycache__
+
+# installation
+gittracker.egg-info
 
 # pycharm config
 .idea
