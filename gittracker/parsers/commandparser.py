@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 
 
+# noinspection PyProtectedMember
 class CommandParser(ArgumentParser):
     def __init__(
             self,
@@ -30,6 +31,10 @@ class CommandParser(ArgumentParser):
         self._default_subcommand = None
         super().__init__(**kwargs)
 
+        # set correct usage info for subcommands
+        for cmd in self.subcommands:
+            cmd.prog = f"{self.prog} {cmd.name}"
+
     # TODO: add custom string help formatting class
 
     @property
@@ -55,6 +60,65 @@ class CommandParser(ArgumentParser):
 
     def __eq__(self, other):
         return other in self.all_names
+
+    @staticmethod
+    def _format_subcmd_help(cmd, formatter):
+        # determine the required width and the entry label
+        help_position = min(formatter._action_max_length + 2,
+                            formatter._max_help_position)
+        help_width = max(formatter._width - help_position, 11)
+        cmd_width = help_position - formatter._current_indent - 2
+        cmd_header = cmd_str = ', '.join(cmd.all_names)
+
+        tup = formatter._current_indent, '', cmd_width, cmd_header
+        cmd_header = '%*s%-*s  ' % tup
+        indent_first = 0
+
+        # add lines of help text (from cmd.short_description)
+        help_text = cmd.short_description
+        help_lines = formatter._split_lines(help_text, help_width)
+        parts = [cmd_header]
+        parts.append('%*s%s\n' % (indent_first, '', help_lines[0]))
+        for line in help_lines[1:]:
+            parts.append('%*s%s\n' % (help_position, '', line))
+
+        return formatter._join_parts(parts)
+
+    def format_help(self):
+        # overrides argparse.ArgumentParser's `format_help` function to
+        # include subcommand info with custom help formatting
+        formatter = self._get_formatter()
+        # format usage
+        formatter.add_usage(
+            self.usage,
+            self._actions,
+            self._mutually_exclusive_groups
+        )
+        # format description
+        formatter.add_text(self.description)
+        # add existing groups first (in this case, "optional arguments")
+        for action_group in self._action_groups:
+            formatter.start_section(action_group.title)
+            formatter.add_text(action_group.description)
+            formatter.add_arguments(action_group._group_actions)
+            formatter.end_section()
+
+        # SUBCOMMAND CUSTOM HELP FORMATTING
+        if any(self.subcommands):
+            formatter.start_section("commands")
+            for cmd in self.subcommands:
+                cmd_str = ', '.join(cmd.all_names)
+                cmd_len = len(cmd_str) + formatter._current_indent
+                formatter._action_max_length = max(formatter._action_max_length,
+                                                   cmd_len)
+                formatter._add_item(self._format_subcmd_help, (cmd, formatter))
+
+            formatter.end_section()
+
+        # format epilogue section
+        formatter.add_text(self.epilog)
+        # format full help output
+        return formatter.format_help()
 
     def run(self, raw_args):
         try:
