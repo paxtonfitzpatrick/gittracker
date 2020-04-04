@@ -29,10 +29,10 @@ def auto_find_repos(
         ignore_dirs=None,
         search_hidden=False,
         verbose=False,
-        permission_err='show'
+        permission_err='show',
 ):
     # TODO: add a custom tqdm subclass that
-    already_tracked = load_tracked_repos()
+    already_tracked = load_tracked_repos(init_on_fail=False)
     # defaults to searching under current working directory
     toplevel_dir = cleanpath(toplevel_dir)
     if not isdir(toplevel_dir):
@@ -140,9 +140,9 @@ def _initialize_file(internal=True):
         print("\n\033[31mGitTracker isn't currently tracking any "
               "repositories\033[0m")
 
-    prompt = "\nWould you like to initialize GitTracker by:\n " \
-             "- [a]utomatically searching for local repositories?\n " \
-             "- [m]anually entering repository paths?\n" \
+    prompt = "\nWould you like to initialize GitTracker by:\n\n" \
+             "\t- [a]utomatically searching for local repositories?\n" \
+             "\t- [m]anually entering repository paths?\n\n" \
              "(enter 'q' to quit)\n[a/m/q]\n"
     response = input(prompt).lower()
     while True:
@@ -218,7 +218,8 @@ def manual_add(repo_paths):
                 with open(TRACKED_REPOS_FPATH, 'a') as f:
                     f.write(f"{full_path}\n")
                 print(f"\nGitTracker: repository '{basename(full_path)}' "
-                      f"stored for tracking in logfile at {TRACKED_REPOS_FPATH}")
+                      "stored for tracking in logfile at:\n\t"
+                      f"{TRACKED_REPOS_FPATH}")
 
 
 def manual_remove(repo_paths, confirm=True):
@@ -271,7 +272,7 @@ def show_tracked(quiet=False):
         f"\n\n\033[032mGitTracker: tracking {len(tracked)} repositories:\033[0m",
         end='\n\n\t'
     )
-    print('\n\t'.join(tracked))
+    print('\n\t'.join(tracked), end='\n\n')
 
 
 @log_error(show=True)
