@@ -58,11 +58,21 @@ class CommandParser(ArgumentParser):
         try:
             cmd = raw_args[0]
         except IndexError:
+            # no positional or optional args were passed
             try:
+                # use the default subcommand
                 cmd = self.get_default_subcommand()
             except ValueError:
-                parsed_args = self.parse_args(raw_args)
-                self.py_function(**vars(parsed_args))
+                # no default subcommand set
+                cmd = None
 
-        subcmd = self.subcommands[self.subcommands.index(cmd)]
-        subcmd.run(raw_args[1:])
+        try:
+            # Pass remaining args to the subcommand's CommandParser
+            # (prevents argparse from consuming args meant for
+            # subcommands like `--help/-h`)
+            subcmd = self.subcommands[self.subcommands.index(cmd)]
+            subcmd.run(raw_args[1:])
+        except ValueError:
+            # the args either belong to the present command or invalid
+            parsed_args = self.parse_args(raw_args)
+            self.py_function(**vars(parsed_args))
