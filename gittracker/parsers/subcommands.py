@@ -152,7 +152,7 @@ remove_parser.add_argument(
 remove_parser.add_argument(
     '--yes',
     '-y',
-    action='store_true',
+    action='store_false',
     dest='confirm',
     help='auto-confirm removal of each repository'
 )
