@@ -9,16 +9,17 @@ DEFAULT_COMMAND = 'status'
 VERSION_FMT = f"GitTracker version: {__version__}"
 
 
-def base_pyfunc(kwarg_dict):
+def base_pyfunc(**kwargs):
     # basic function that returns correct output
     # based on options passed to main executable
-    if kwarg_dict['log_dir']:
-        return LOG_DIR
+    if kwargs.get('log_dir'):
+        print(f"GitTracker logfile directory:\n\t{LOG_DIR}")
 
 
 def main():
     git_tracker = CommandParser(
         prog='gittracker',
+        usage='%(prog)s [--help | --version | --log-dir | command]',
         description='GitTracker: keep track of all your git repositories with '
                     'a single command',
         epilog="commands are run with `gittracker [cmd] [args].\nFor more "
@@ -32,8 +33,8 @@ def main():
     )
     base_commands = git_tracker.add_mutually_exclusive_group(required=False)
     base_commands.add_argument(
-        '--help',
         '-h',
+        '--help',
         action='help',
         help='show this help message and exit'
     )
