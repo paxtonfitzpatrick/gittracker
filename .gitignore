@@ -1,6 +1,9 @@
 # Mac Finder display config
 *.DS_Store
 
+# bytecode dirs
+*__pycache__
+
 # pycharm config
 .idea
 
