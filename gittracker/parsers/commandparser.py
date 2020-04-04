@@ -12,6 +12,8 @@ class CommandParser(ArgumentParser):
             **kwargs
     ):
         self.name = name
+        if isinstance(aliases, str):
+            aliases = [aliases]
         self.aliases = [] if aliases is None else aliases
         self.py_function = py_function
         if subcommands is None:
