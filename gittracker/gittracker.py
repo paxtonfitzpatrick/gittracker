@@ -7,7 +7,7 @@ from .utils.utils import log_error, validate_writable_path
 
 
 @log_error
-def track(verbose, submodules, outfile, plain):
+def track(verbose, submodules=0, outfile=None, plain=False):
     # first, tweak the verbose arg as a way of allowing a non-zero
     # default value with argparse's "count" action
     verbose = 1 if verbose is None else verbose

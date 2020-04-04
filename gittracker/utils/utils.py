@@ -125,20 +125,6 @@ def prompt_input(prompt, default=None, possible_bug=False):
             response = input(f"\n{bad_input_msg}\n{opts}\n").lower()
 
 
-def validate_writable_path(path):
-    # checks that a file path is valid and writable,
-    # and converts it to a pathlib.Path object
-    full_path = Path(cleanpath(path))
-    parent_dir = full_path.parent
-    err_msg = f"\nunable to write to {full_path}"
-    if not parent_dir.is_dir():
-        exit(f"\033[31m{err_msg}\ndirectory {parent_dir} does not exist\033[0m")
-    if not os.access(parent_dir, mode=os.W_OK):
-        exit(f"\033[31m{err_msg}\nlacking write permission for parent "
-             f"directory: {parent_dir}\033[0m")
-    return full_path
-
-
 def validate_repo(repo_path):
     cleaned_path = cleanpath(repo_path)
     # check directory exists
@@ -149,3 +135,19 @@ def validate_repo(repo_path):
         raise NoGitdirError(cleaned_path)
 
     return cleaned_path
+
+
+def validate_writable_path(path):
+    # checks that a file path is valid and writable,
+    # and converts it to a pathlib.Path object
+    if path is None:
+        return
+    full_path = Path(cleanpath(path))
+    parent_dir = full_path.parent
+    err_msg = f"\nunable to write to {full_path}"
+    if not parent_dir.is_dir():
+        exit(f"\033[31m{err_msg}\ndirectory {parent_dir} does not exist\033[0m")
+    if not os.access(parent_dir, mode=os.W_OK):
+        exit(f"\033[31m{err_msg}\nlacking write permission for parent "
+             f"directory: {parent_dir}\033[0m")
+    return full_path
