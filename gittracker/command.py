@@ -18,6 +18,7 @@ def base_pyfunc(kwarg_dict):
 
 def main():
     git_tracker = CommandParser(
+        prog='gittracker',
         description='GitTracker: keep track of all your git repositories with '
                     'a single command',
         epilog="commands are run with `gittracker [cmd] [args].\nFor more "
@@ -26,9 +27,16 @@ def main():
                f"`gittracker {DEFAULT_COMMAND} [args]` unless 'args' contains "
                "any of the above base options",
         py_function=base_pyfunc,
-        subcommands=SUBCOMMANDS
+        subcommands=SUBCOMMANDS,
+        add_help=False
     )
     base_commands = git_tracker.add_mutually_exclusive_group(required=False)
+    base_commands.add_argument(
+        '--help',
+        '-h',
+        action='help',
+        help='show this help message and exit'
+    )
     base_commands.add_argument(
         '--version',
         '-V',

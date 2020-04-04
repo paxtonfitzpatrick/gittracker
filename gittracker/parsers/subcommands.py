@@ -63,10 +63,10 @@ pos_group = find_parser.add_argument_group(
     description='(passed positionally but not required)'
 )
 pos_group.add_argument(
-    'topdir',
+    'toplevel_dir',
     nargs='?',
     default='.',
-    dest='toplevel_dir',
+    metavar='top-dir',
     help='the outermost directory to search under'
 )
 opt_group = find_parser.add_argument_group(
@@ -88,7 +88,6 @@ opt_group.add_argument(
 )
 opt_group.add_argument(
     '--search-hidden',
-    '-h',
     action='store_true',
     help='pass to include hidden directories in the search'
 )
@@ -100,7 +99,7 @@ opt_group.add_argument(
          'very large directory structures)'
 )
 opt_group.add_argument(
-    'permission-err',
+    '--permission-err',
     '-p',
     choices=('ignore', 'show', 'raise'),
     help='how to handle read permission errors encountered while walking the '
@@ -172,3 +171,12 @@ list_parser.add_argument(
     action='store_true',
     help='show only the repository name rather than the full path'
 )
+
+SUBCOMMANDS = [
+    status_parser,
+    find_parser,
+    add_parser,
+    init_parser,
+    remove_parser,
+    list_parser
+]
