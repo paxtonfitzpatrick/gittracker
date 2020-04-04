@@ -1,7 +1,5 @@
 from inspect import currentframe, getouterframes
 
-from ..repofile.repofile import TRACKED_REPOS_FPATH
-
 
 class GitTrackerError(Exception):
     pass
@@ -20,12 +18,6 @@ class NoGitdirError(GitTrackerError):
     def __init__(self, repo_path):
         msg = f"{repo_path} does not appear to be a git repository " \
               "(no .git directory found)"
-        super().__init__(msg)
-
-
-class NoTrackedReposError(GitTrackerError):
-    def __init__(self, repofile_path=TRACKED_REPOS_FPATH):
-        msg = f"No repositories tracked in logfile at {repofile_path}"
         super().__init__(msg)
 
 

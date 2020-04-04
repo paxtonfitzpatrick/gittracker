@@ -1,5 +1,5 @@
 import os
-from .utils.utils import is_windows
+from gittracker.utils.utils import is_windows
 
 version_info = (0, 0, 1)
 __version__ = '.'.join(map(str, version_info))
