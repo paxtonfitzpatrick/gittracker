@@ -1,5 +1,3 @@
-import sys
-from collections import defaultdict
 from os.path import basename
 from shutil import get_terminal_size
 from .ascii import RANDOM_LOGO
@@ -11,6 +9,7 @@ from .templates import (
     SINGLE_FILE_CHANGE,
     SINGLE_REPO_DETACHED
 )
+from ..utils.utils import clear_display
 
 
 class Displayer:
@@ -158,8 +157,8 @@ class Displayer:
                 n_good += 1
             repo_name_fmt = self.format_value_text(value=repo_name, style=style)
             template_mapping = {'repo_name': repo_name_fmt}
-            full_repo_templates = self.repo_template.safe_substitute(template_mapping)
-            full_repo_templates.append(full_repo_templates)
+            full_repo_template = self.repo_template.safe_substitute(template_mapping)
+            full_repo_templates.append(full_repo_template)
         return full_repo_templates, n_good, n_bad
 
     def _format_v1(self):
@@ -168,7 +167,7 @@ class Displayer:
         n_good = 0
         n_bad = 0
         for repo_path, repo_status in self.repos.items():
-            template_mapping = dict() #defaultdict(lambda: '')
+            template_mapping = dict()
             template_mapping['repo_path'] = repo_path
             if isinstance(repo_status, str):
                 # HEAD is detached, use alternate template...
@@ -201,7 +200,6 @@ class Displayer:
                     good_vs_remote = True
                 elif n_ahead == n_behind == 0:
                     # local branch is even with remote tracking branch
-                    name_color = 'green'
                     compare_msg = 'even with'
                     good_vs_remote = True
                 elif n_ahead > 0 and n_behind > 0:
@@ -259,8 +257,9 @@ class Displayer:
         for repo_path, repo_status in self.repos.items():
             template_mapping = dict()
             template_mapping['repo_path'] = repo_path
-            # assume color for local not even with remote, just for convenience
-            name_color = 'red'
+            # default to color for local even with remote -- it may get
+            # changed under various conditions below
+            name_color = 'green'
             if isinstance(repo_status, str):
                 # HEAD is detached, use alternate template...
                 template = SINGLE_REPO_DETACHED
@@ -268,7 +267,8 @@ class Displayer:
                     value=repo_status,
                     style='red'
                 )
-                n_bad += 1
+                template_mapping['change_states'] = ''
+                name_color = 'red'
             else:
                 # ...otherwise, use standard template and get further info
                 template = self.repo_template
@@ -284,27 +284,34 @@ class Displayer:
                 n_behind = repo_status['n_commits_behind']
                 n_ahead_fmt = self.format_value_text(value=n_ahead, style='bold')
                 n_behind_fmt = self.format_value_text(value=n_behind, style='bold')
-                if n_ahead == n_behind == 0:
+
+                if n_ahead is n_behind is None:
+                    # local repository isn't tracking a remote
+                    compare_msg = ''
+                    good_vs_remote = True
+                elif n_ahead == n_behind == 0:
                     # local branch is even with remote tracking branch
-                    name_color = 'green'
                     compare_msg = 'even with'
-                    n_good += 1
+                    good_vs_remote = True
                 elif n_ahead > 0 and n_behind > 0:
                     # local branch is some commits ahead, some behind
                     compare_msg = f"{n_behind_fmt} commits behind, " \
                                   f"{n_ahead_fmt} ahead of"
-                    n_bad += 1
+                    good_vs_remote = False
                 elif n_ahead > 0:
                     # local branch is ahead of remote, but not behind
                     compare_msg = f"{n_ahead_fmt} commits ahead of"
-                    n_bad += 1
+                    good_vs_remote = False
                 else:
                     # local branch behind remote, but not ahead
+                    assert n_behind > 0
                     compare_msg = f"{n_behind_fmt} commits behind"
-                    n_bad += 1
+                    good_vs_remote = False
+
+                if len(compare_msg) > 0:
+                    template_mapping['local_branch'] += ':'
 
                 template_mapping['compared_to_remote'] = compare_msg
-
                 full_state_templates = []
                 state_change_msgs = {
                     'staged': 'files staged for commit',
@@ -316,10 +323,14 @@ class Displayer:
                         ['green', 'red', 'red']
                 ):
                     if repo_status[f"n_{state}"] > 0:
+                        name_color = 'red'
+                        msg = state_change_msgs[state]
+                        if repo_status[f"n_{state}"] == 1:
+                             msg = msg.replace('files', 'file')
                         state_template = SINGLE_CHANGE_STATE
                         state_mapping = dict()
                         state_mapping['n_changed'] = repo_status[f'n_{state}']
-                        state_mapping['state_change_msg'] = state_change_msgs[state]
+                        state_mapping['change_state_msg'] = msg
                         changed_files = []
                         for file in repo_status[f'files_{state}']:
                             file_template = SINGLE_FILE_CHANGE
@@ -361,13 +372,20 @@ class Displayer:
                             f_t = file_template.safe_substitute(file_template_mapping)
                             changed_files.append(f_t)
 
-                        state_mapping['changed_files'] = '\n'.join(changed_files)
+                        state_mapping['changed_files'] = '\n\t'.join(changed_files)
                         full_state_template = state_template.safe_substitute(
                             state_mapping
                         )
                         full_state_templates.append(full_state_template)
-                        template_mapping['change_states'] = '\n'.join(full_state_templates)
+                        template_mapping['change_states'] = '\n    '.join(
+                            full_state_templates
+                        )
 
+            if name_color == 'green':
+                template_mapping['change_states'] = ''
+                n_good += 1
+            else:
+                n_bad += 1
             template_mapping['repo_name'] = self.format_value_text(
                 value=basename(repo_path),
                 style=('bold', name_color)
@@ -384,6 +402,7 @@ class Displayer:
             confirm_msg = self.format_value_text(value=confirm_msg, style='green')
             print(confirm_msg)
         else:
+            clear_display()
             # ...or print it to the screen
             print(self.full_template)
 

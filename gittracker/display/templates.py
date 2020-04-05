@@ -20,7 +20,7 @@ SINGLE_REPO_V1 = Template(
 ${repo_name}
     ${repo_path}
     on branch ${local_branch} ${compared_to_remote} ${remote_branch}
-    ${n_uncommitted} changes\
+    ${n_uncommitted} uncommitted changes\
 """
 )
 
@@ -33,7 +33,7 @@ SINGLE_REPO_V2 = Template(
 """\
 ${repo_name}
     ${repo_path}
-    on branch ${local_branch}: ${compared_to_remote} ${remote_branch}
+    on branch ${local_branch} ${compared_to_remote} ${remote_branch}
     ${change_states}
 """
 )
@@ -44,7 +44,7 @@ ${repo_name}
 SINGLE_CHANGE_STATE = Template(
 """\
 ${n_changed} ${change_state_msg}:
-    ${changed_files}\
+        ${changed_files}\
 """
 )
 
