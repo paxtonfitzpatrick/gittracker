@@ -35,11 +35,12 @@ def get_status(repo_paths, verbose=1, follow_submodules=0):
                 # if HEAD is detached, just report its commit hash...
                 sha_shortened = repo.head.object.hexsha[:7]
                 changes[path] = f'HEAD detached at {sha_shortened}'
+                continue
             elif verbose == 0:
                 # ...or, if everything is up-to-date and that's all we care about
                 # (i.e., because verbosity is low), then no need to check further
                 changes[path] = None
-            continue
+                continue
 
         raw_changes = _single_repo_status(
             repo,
@@ -97,19 +98,28 @@ def _single_repo_status(repo, verbose, follow_submodules):
     if verbose > 0:
         local_branch = repo.active_branch
         local_branch_name = local_branch.name
-        remote_branch_name = local_branch.tracking_branch().name
+        try:
+            remote_branch_name = local_branch.tracking_branch().name
+            n_ahead = len(list(repo.iter_commits(
+                f"{remote_branch_name}..{local_branch_name}"
+            )))
+            n_behind = len(list(repo.iter_commits(
+                f"{local_branch_name}..{remote_branch_name}"
+            )))
+        except AttributeError:
+            # local branch isn't tracking a remote
+            remote_branch_name = ''
+            n_ahead = None
+            n_behind = None
+
         headcommit = repo.head.commit
         staged = repo.index.diff(headcommit)
         unstaged = repo.index.diff(None)
         untracked = repo.untracked_files
         status['local_branch'] = local_branch_name
         status['remote_branch'] = remote_branch_name
-        status['n_commits_ahead'] = len(
-            list(repo.iter_commits(f"{remote_branch_name}..{local_branch_name}"))
-        )
-        status['n_commits_behind'] = len(
-            list(repo.iter_commits(f"{local_branch_name}..{remote_branch_name}"))
-        )
+        status['n_commits_ahead'] = n_ahead
+        status['n_commits_behind'] = n_behind
         status['n_staged'] = len(staged)
         status['n_not_staged'] = len(unstaged)
         status['n_untracked'] = len(untracked)
