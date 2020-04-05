@@ -249,7 +249,7 @@ class Displayer:
         return full_repo_templates, n_good, n_bad
 
     def _format_v2(self):
-        # TODO: this is a lot of redundant code with _format_v1... refactor pls
+        # TODO: this is a lot of redundant code with _format_v1... refactor
         # formatting function for verbose level 2
         full_repo_templates = []
         n_good = 0
@@ -269,6 +269,7 @@ class Displayer:
                 )
                 template_mapping['change_states'] = ''
                 name_color = 'red'
+                n_bad += 1
             else:
                 # ...otherwise, use standard template and get further info
                 template = self.repo_template
@@ -298,16 +299,18 @@ class Displayer:
                     compare_msg = f"{n_behind_fmt} commits behind, " \
                                   f"{n_ahead_fmt} ahead of"
                     good_vs_remote = False
+                    name_color = 'red'
                 elif n_ahead > 0:
                     # local branch is ahead of remote, but not behind
                     compare_msg = f"{n_ahead_fmt} commits ahead of"
                     good_vs_remote = False
+                    name_color = 'red'
                 else:
                     # local branch behind remote, but not ahead
                     assert n_behind > 0
                     compare_msg = f"{n_behind_fmt} commits behind"
                     good_vs_remote = False
-
+                    name_color = 'red'
                 if len(compare_msg) > 0:
                     template_mapping['local_branch'] += ':'
 
@@ -353,8 +356,9 @@ class Displayer:
                                 change_type = 'renamed:'
                             elif change_code == 'D':
                                 fpath = a_path
-                                change_type = 'deleted'
-                            elif change_code == 'm':
+                                # intentional leading space for horizonal alignment
+                                change_type = ' deleted'
+                            elif change_code == 'M':
                                 fpath = a_path
                                 change_type = 'modified'
                             else:
@@ -377,15 +381,15 @@ class Displayer:
                             state_mapping
                         )
                         full_state_templates.append(full_state_template)
-                        template_mapping['change_states'] = '\n    '.join(
-                            full_state_templates
-                        )
 
-            if name_color == 'green':
-                template_mapping['change_states'] = ''
-                n_good += 1
-            else:
-                n_bad += 1
+                if name_color == 'green' and good_vs_remote:
+                    template_mapping['change_states'] = ''
+                    n_good += 1
+                else:
+                    template_mapping['change_states'] = '\n    '.join(
+                        full_state_templates
+                    )
+                    n_bad += 1
             template_mapping['repo_name'] = self.format_value_text(
                 value=basename(repo_path),
                 style=('bold', name_color)

@@ -143,7 +143,7 @@ def _single_repo_status(repo, verbose, follow_submodules):
             submodules = {}
             for sm in repo.submodules:
                 sm_status = _submodule_status(sm, depth=follow_submodules)
-                submodules[sm.path](sm_status)
+                submodules[sm.path] = sm_status
 
             status['submodules'] = submodules
 
