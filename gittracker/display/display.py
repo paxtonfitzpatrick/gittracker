@@ -1,4 +1,5 @@
 import sys
+from collections import defaultdict
 from os.path import basename
 from shutil import get_terminal_size
 from .ascii import RANDOM_LOGO
@@ -66,6 +67,10 @@ class Displayer:
         # fill individual repo templates
         full_repo_templates, n_good, n_bad = self.repo_format_func()
         n_total = n_good + n_bad
+        n_total_fmt = self.format_value_text(
+            value=n_total,
+            style='bold'
+        )
         # handle two (probably rare) cases
         if n_bad == 0:
             # if no repos have unpushed changes, report them as "all" up-to-date
@@ -99,7 +104,7 @@ class Displayer:
         # mapping for self.outer_template
         template_mapping = {
             'pkg_ascii_logo': self.logo,
-            'n_repos_tracked': self.format_value_text(value=n_total, style='bold'),
+            'n_repos_tracked': n_total_fmt,
             'summary_msg': summary_msg_fmt,
             'line_sep': '=' * self.display_width,
             'repos_status': '\n'.join(full_repo_templates)
@@ -132,7 +137,7 @@ class Displayer:
         elif isinstance(style, str):
             ansi_val = self.ansi_seqs[style]
         else:
-            ansi_val = ";".join((self.ansi_seqs[s] for s in style))
+            ansi_val = ";".join((str(self.ansi_seqs[s]) for s in style))
 
         style_code = f"\033[{ansi_val}m"
         return f"{style_code}{value}{reset_code}"
@@ -163,10 +168,8 @@ class Displayer:
         n_good = 0
         n_bad = 0
         for repo_path, repo_status in self.repos.items():
-            template_mapping = dict()
+            template_mapping = dict() #defaultdict(lambda: '')
             template_mapping['repo_path'] = repo_path
-            # assume color for local not even with remote, just for convenience
-            name_color = 'red'
             if isinstance(repo_status, str):
                 # HEAD is detached, use alternate template...
                 template = SINGLE_REPO_DETACHED
@@ -174,6 +177,7 @@ class Displayer:
                     value=repo_status,
                     style='red'
                 )
+                name_color = 'red'
                 n_bad += 1
             else:
                 # ...otherwise, use standard template and get further info
@@ -190,24 +194,33 @@ class Displayer:
                 n_behind = repo_status['n_commits_behind']
                 n_ahead_fmt = self.format_value_text(value=n_ahead, style='bold')
                 n_behind_fmt = self.format_value_text(value=n_behind, style='bold')
-                if n_ahead == n_behind == 0:
+
+                if n_ahead is n_behind is None:
+                    # local repository isn't tracking a remote
+                    compare_msg = ''
+                    good_vs_remote = True
+                elif n_ahead == n_behind == 0:
                     # local branch is even with remote tracking branch
                     name_color = 'green'
                     compare_msg = 'even with'
-                    n_good += 1
+                    good_vs_remote = True
                 elif n_ahead > 0 and n_behind > 0:
                     # local branch is some commits ahead, some behind
                     compare_msg = f"{n_behind_fmt} commits behind, " \
                                   f"{n_ahead_fmt} ahead of"
-                    n_bad += 1
+                    good_vs_remote = False
                 elif n_ahead > 0:
                     # local branch is ahead of remote, but not behind
                     compare_msg = f"{n_ahead_fmt} commits ahead of"
-                    n_bad += 1
+                    good_vs_remote = False
                 else:
                     # local branch behind remote, but not ahead
+                    assert n_behind > 0
                     compare_msg = f"{n_behind_fmt} commits behind"
-                    n_bad += 1
+                    good_vs_remote = False
+
+                if len(compare_msg) > 0:
+                    template_mapping['local_branch'] += ':'
 
                 template_mapping['compared_to_remote'] = compare_msg
                 n_uncommitted = (
@@ -215,7 +228,15 @@ class Displayer:
                         + repo_status['n_not_staged']
                         + repo_status['n_untracked']
                 )
+
                 uncommitted_color = 'green' if n_uncommitted == 0 else 'red'
+                if good_vs_remote and n_uncommitted == 0:
+                    name_color = 'green'
+                    n_good += 1
+                else:
+                    name_color = 'red'
+                    n_bad += 1
+
                 template_mapping['n_uncommitted'] = self.format_value_text(
                     value=n_uncommitted,
                     style=('bold', uncommitted_color)

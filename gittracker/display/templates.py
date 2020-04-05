@@ -4,8 +4,8 @@ from string import Template
 # wrapper template for full output. Applies to all verbosity levels
 OUTER_TEMPLATE = Template(
 """\
-${pkg_ascii_logo}: 
-${n_repos_tracked} tracked repositories: ${repo_summary_msg}
+${pkg_ascii_logo}
+${n_repos_tracked} tracked repositories: ${summary_msg}
 ${line_sep}
 ${repos_status}\
 """
@@ -19,7 +19,7 @@ SINGLE_REPO_V1 = Template(
 """\
 ${repo_name}
     ${repo_path}
-    on branch ${local_branch}: ${compared_to_remote} ${remote_branch}
+    on branch ${local_branch} ${compared_to_remote} ${remote_branch}
     ${n_uncommitted} changes\
 """
 )
