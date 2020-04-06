@@ -15,14 +15,31 @@ status_parser = CommandParser(
     description='show "git-status"-like output for each tracked repository',
     short_description='show the states of tracked repositories [default command]'
 )
-status_parser.add_argument(
+verbosity_group = status_parser.add_mutually_exclusive_group(required=False)
+verbosity_group.add_argument(
     '-v',
     '--verbose',
-    action='count',
-    help='the verbosity level for the output. Level 1 shows minimal condensed '
-         'info, level 2 [default] shows some more info, level 3 shows full '
-         '"git-status" output'
+    action='store_const',
+    const=3,
+    help='show full "git-status"-like output for each repository'
 )
+verbosity_group.add_argument(
+    '-q',
+    '--quiet',
+    action='store_const',
+    const=1,
+    dest='verbose',
+    help='show only the overall status (up-to-date vs not) for each repository'
+)
+
+# status_parser.add_argument(
+#     '-v',
+#     '--verbose',
+#     action='count',
+#     help='the verbosity level for the output. Level 1 shows minimal condensed '
+#          'info, level 2 [default] shows some more info, level 3 shows full '
+#          '"git-status" output'
+# )
 status_parser.add_argument(
     '--submodules',
     default=0,
@@ -42,7 +59,7 @@ status_parser.add_argument(
 status_parser.add_argument(
     '--plain',
     action='store_true',
-    help='pass to disable output stylization'
+    help='disable output stylization'
 )
 
 ################################################################################
