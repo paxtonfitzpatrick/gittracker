@@ -135,8 +135,9 @@ add_parser = CommandParser(
     description='add new repositories to GitTracker'
 )
 add_parser.add_argument(
-    'repo-path',
+    'repo_paths',
     nargs='+',
+    metavar='repo-paths',
     help='path(s) to repositories to add'
 )
 
@@ -163,8 +164,9 @@ remove_parser = CommandParser(
     short_description='stop tracking a repository with GitTracker'
 )
 remove_parser.add_argument(
-    'repo-path',
+    'repo_paths',
     nargs='+',
+    metavar='repo-paths',
     help='repository path(s) to stop tracking'
 )
 remove_parser.add_argument(
