@@ -10,5 +10,8 @@ gittracker.egg-info
 # pycharm config
 .idea
 
+# users' tracked repositories and error logs
+Gittracker/log
+
 # files for developing package
 dev/
