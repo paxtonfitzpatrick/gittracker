@@ -1,5 +1,6 @@
 # handles command, sub-command, and argument parsing
 import sys
+from argparse import RawDescriptionHelpFormatter
 from gittracker import __version__
 from gittracker.parsers.commandparser import CommandParser
 from gittracker.parsers.subcommands import SUBCOMMANDS
@@ -22,11 +23,12 @@ def main():
         usage='%(prog)s [--help | --version | --log-dir | command]',
         description='GitTracker: keep track of all your git repositories with '
                     'a single command',
-        epilog="commands are run with `gittracker [cmd] [args].\nFor more "
+        epilog="commands are run with `gittracker [cmd] [args]`.\nFor more "
                "information on a given 'cmd', enter `gittracker [cmd] --help`"
                "\nNOTE: simply running `gittracker [args]` will run "
-               f"`gittracker {DEFAULT_COMMAND} [args]` unless 'args' contains "
+               f"`gittracker {DEFAULT_COMMAND} [args]`\nunless 'args' contains "
                "any of the above base options",
+        formatter_class=RawDescriptionHelpFormatter,
         py_function=base_pyfunc,
         subcommands=SUBCOMMANDS,
         add_help=False

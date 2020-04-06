@@ -1,7 +1,7 @@
 from git import Repo, InvalidGitRepositoryError
 
 
-def get_status(repo_paths, verbose=1, follow_submodules=0):
+def get_status(repo_paths, verbose=2, follow_submodules=0):
     """
     Determines "git-status"-like information for a set of
     git repositories based on their (absolute) `repo_paths`.
@@ -10,7 +10,7 @@ def get_status(repo_paths, verbose=1, follow_submodules=0):
             Iterable of strings containing absolute paths to
             a predetermined set of local git repositories.
     :param verbose: int (defult 2)
-            Verbosity level.  See ___ for options and
+            Verbosity level.  See docs for options and
             descriptions.
     :param follow_submodules: int (default 0)
             Maximum recursion depth for checking statuses
@@ -36,7 +36,7 @@ def get_status(repo_paths, verbose=1, follow_submodules=0):
                 sha_shortened = repo.head.object.hexsha[:7]
                 changes[path] = f'HEAD detached at {sha_shortened}'
                 continue
-            elif verbose == 0:
+            elif verbose == 1:
                 # ...or, if everything is up-to-date and that's all we care about
                 # (i.e., because verbosity is low), then no need to check further
                 changes[path] = None
@@ -69,26 +69,26 @@ def _single_repo_status(repo, verbose, follow_submodules):
     """
     # TODO (future): option to get info about branches other than current
     status = {
-        # str if verbose == 2
+        # str if verbose == 3
         'local_branch': None,
-        # str if verbose == 2
+        # str if verbose == 3
         'remote_branch': None,
-        # int if verbose >= 1
+        # int if verbose >= 2
         'n_commits_ahead': None,
-        # int if verbose >= 1
+        # int if verbose >= 2
         'n_commits_behind': None,
-        # int if verbose >= 1
+        # int if verbose >= 2
         'n_staged': None,
-        # list of (change type, old filepath, new filepath) if verbose == 2
+        # list of (change type, old filepath, new filepath) if verbose == 3
         # if change type wasn't a rename, then new filepath is None
         'files_staged': None,
-        # int if verbose >= 1
+        # int if verbose >= 2
         'n_not_staged': None,
-        # list of (change type, filepath) if verbose == 2
+        # list of (change type, filepath) if verbose == 3
         'files_not_staged': None,
-        # int if verbose >= 1
+        # int if verbose >= 2
         'n_untracked': None,
-        # list of filepaths if verbose == 2
+        # list of filepaths if verbose == 3
         'files_untracked': None,
         # dict of {path: status} pairs if follow_submodules is True and the repo
         # contains any submodules.
@@ -123,7 +123,7 @@ def _single_repo_status(repo, verbose, follow_submodules):
     status['n_not_staged'] = len(unstaged)
     status['n_untracked'] = len(untracked)
 
-    if verbose == 2:
+    if verbose == 3:
         # go through any staged changes manually to handle renames
         files_staged = []
         for diff in staged:
@@ -167,12 +167,12 @@ def _submodule_status(submodule, depth=1):
     """
     # TODO: Function needs testing
     # TODO: once expandable GUI view is finished, can allow variable verbosity.
-    #  For now, pinning to 0 regardless of parent `verbose` value
+    #  For now, pinning to 1 regardless of parent `verbose` value
     try:
         submodule_repo = submodule.module()
         sm_status = _single_repo_status(
             submodule_repo,
-            verbose=0,
+            verbose=1,
             follow_submodules=depth - 1)
         return sm_status, None
 

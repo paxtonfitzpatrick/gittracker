@@ -14,7 +14,7 @@ from ..utils.utils import clear_display
 
 
 class Displayer:
-    def __init__(self, repos, verbose=1, outfile=None, plain=False):
+    def __init__(self, repos, verbose=2, outfile=None, plain=False):
         """
         Class that handles formatting and displaying information
         for tracked repositories according to the given
@@ -24,8 +24,8 @@ class Displayer:
                 `changes` typically contains "git-status"-like
                 information. See `gittracker.tracker.tracker` for
                 further details
-        :param verbose: int {0, 1, 2} (default: 1)
-                verbosity level of output (0 is least verbose)
+        :param verbose: int {1, 2, 3} (default: 2)
+                verbosity level of output (1 is least verbose)
         :param outfile: pathlib.Path (optional)
                 the file to which the output should be written.
                 If None [default], write to sys.stdout with stylized
@@ -43,20 +43,20 @@ class Displayer:
         self.ansi_seqs = ANSI_SEQS
         self.logo = RANDOM_LOGO
 
-        if self.verbose == 0:
-            self.repo_format_func = self._format_v0
-        elif self.verbose == 1:
+        if self.verbose == 1:
             self.repo_format_func = self._format_v1
-        else:
+        elif self.verbose == 2:
             self.repo_format_func = self._format_v2
+        else:
+            self.repo_format_func = self._format_v3
 
         # completed outer template to display
         self.full_template = None
         # stores list of filled single-repo templates
         self.full_repo_templates = None
-        # stores filled `SINGLE_CHANGE_STATE` templates if self.verbose == 2
+        # stores filled `SINGLE_CHANGE_STATE` templates if self.verbose == 3
         self.full_state_templates = None
-        # stores filled `SINGLE_FILE_CHANGE` templates if self.verbose == 2
+        # stores filled `SINGLE_FILE_CHANGE` templates if self.verbose == 3
         self.full_file_templates = None
 
     @property
@@ -110,7 +110,7 @@ class Displayer:
             'repos_status': '\n'.join(full_repo_templates)
         }
         full_template = self.outer_template.safe_substitute(template_mapping)
-        # cleans up template formatting for verbosity level 2
+        # cleans up template formatting for verbosity level 3
         # in cases where repos have no uncommitted changes
         full_template = full_template.replace('    \n', '\n')
         self.full_template = full_template.replace('\n\n\n', '\n\n')
@@ -146,8 +146,8 @@ class Displayer:
         style_code = f"\033[{ansi_val}m"
         return f"{style_code}{value}{reset_code}"
 
-    def _format_v0(self):
-        # repo status formatting function called if self.verbose == 0
+    def _format_v1(self):
+        # repo status formatting function called if self.verbose == 1
         full_repo_templates = []
         n_good = 0
         n_bad = 0
@@ -166,8 +166,8 @@ class Displayer:
             full_repo_templates.append(full_repo_template)
         return full_repo_templates, n_good, n_bad
 
-    def _format_v1(self):
-        # formatting function for verbose level 1
+    def _format_v2(self):
+        # formatting function if self.verbose == 2
         full_repo_templates = []
         n_good = 0
         n_bad = 0
@@ -253,9 +253,9 @@ class Displayer:
             full_repo_templates.append(full_repo_template)
         return full_repo_templates, n_good, n_bad
 
-    def _format_v2(self):
-        # TODO: this is a lot of redundant code with _format_v1... refactor
-        # formatting function for verbose level 2
+    def _format_v3(self):
+        # TODO: this is a lot of redundant code with _format_v2... refactor
+        # formatting function if self.verbose == 3
         full_repo_templates = []
         n_good = 0
         n_bad = 0
@@ -414,7 +414,6 @@ class Displayer:
 
     def _format_submodules(self, submodules):
         full_sm_templates = []
-        # re-use verbosity level 0 template
         sm_template = SINGLE_SUBMODULE
         all_good = True
         for sm_path, sm_status in submodules.items():

@@ -11,11 +11,11 @@ ${repos_status}\
 """
 )
 
-# single-repository template: verbosity level 0
-SINGLE_REPO_V0 = Template("${repo_name}")
-
 # single-repository template: verbosity level 1
-SINGLE_REPO_V1 = Template(
+SINGLE_REPO_V1 = Template("${repo_name}")
+
+# single-repository template: verbosity level 2
+SINGLE_REPO_V2 = Template(
 """\
 ${repo_name}
     ${repo_path}
@@ -24,12 +24,12 @@ ${repo_name}
 """
 )
 
-# single-repository template: verbosity level 2
+# single-repository template: verbosity level 3
 # Note: this one has to be constructed somewhat indirectly in order to
 # accommodate different possible states of the repository (e.g., presence or
 # lack of staged/unstaged changes). `file_states` gets filled by instances of
 # `SINGLE_CHANGE_STATE` (if any)
-SINGLE_REPO_V2 = Template(
+SINGLE_REPO_V3 = Template(
 """\
 ${repo_name}
     ${repo_path}
@@ -39,7 +39,7 @@ ${repo_name}
 )
 
 # format skeleton for a single change state (e.g., staged, not staged,
-# untracked) in verbosity level 2. `changed_files` gets filled by instances
+# untracked) in verbosity level 3. `changed_files` gets filled by instances
 # of `SINGLE_FILE_CHANGE`
 SINGLE_CHANGE_STATE = Template(
 """\
@@ -48,11 +48,11 @@ ${n_changed} ${change_state_msg}:
 """
 )
 
-# format skeleton for a single modified file in verbosity level 2
+# format skeleton for a single modified file in verbosity level 3
 SINGLE_FILE_CHANGE = Template("${change_type}:   ${filepath}")
 
 # replacement skeleton for repositories in detached HEAD states for verbosity
-# levels 1 & 2
+# levels 2 & 3
 SINGLE_REPO_DETACHED = Template(
 """\
 ${repo_name}
@@ -62,7 +62,7 @@ ${repo_name}
 )
 
 # format skeleton for submodules
-# (analogous to SINGLE_REPO_V1 template; only used with SINGLE_REPO_V2)
+# (analogous to SINGLE_REPO_V2 template; only used with SINGLE_REPO_V3)
 SINGLE_SUBMODULE = Template(
 """\
 \t${submodule_path}: ${submodule_info}\
@@ -71,9 +71,9 @@ SINGLE_SUBMODULE = Template(
 
 # mapping of single repository templates by verbosity value
 REPO_TEMPLATES = {
-    0: SINGLE_REPO_V0,
     1: SINGLE_REPO_V1,
-    2: SINGLE_REPO_V2
+    2: SINGLE_REPO_V2,
+    3: SINGLE_REPO_V3
 }
 
 # numeric codes from ANSI escape sequences for text color/formatting
