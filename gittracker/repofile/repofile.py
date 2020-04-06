@@ -123,7 +123,7 @@ def auto_find_repos(
                 # always leave newline at end for simplicity
                 f.write('\n')
             exit(f"\033[32mGitTracker: {n_found} new repositor{suff1} stored "
-                 f"for tracking in logfile at {TRACKED_REPOS_FPATH}\033[0m")
+                 f"for tracking in logfile at\n\t{TRACKED_REPOS_FPATH}\033[0m")
 
 
 def manual_init():
@@ -227,6 +227,7 @@ def manual_remove(repo_paths, confirm=True):
     # tracked-repos file and stop tracking it
     tracked_repos = load_tracked_repos(init_on_fail=False)
     removed = []
+    not_tracked = []
     for repo_path in repo_paths:
         full_path = cleanpath(repo_path)
         try:
@@ -249,13 +250,17 @@ def manual_remove(repo_paths, confirm=True):
             else:
                 print(f"{full_path} not removed")
         except ValueError:
-            print(f"\n\033[31m{full_path} is not currently tracked by GitTracker."
-                  "\033[0m\n\nYou can view the currently tracked repositories "
-                  "with:\n\tgittracker ls\n")
+            not_tracked.append(repo_path)
+
+    if any(not_tracked):
+        not_tracked_fmt = '\n\t'.join(not_tracked)
+        print(f"\n\033[31mGitTracker is not currently tracking\n\t{not_tracked_fmt}"
+              "\033[0m\n\nYou can view the currently tracked repositories with:\n\t"
+              "gittracker ls\n")
 
     if any(removed):
         removed_fmt = '\n\t'.join(removed)
-        print(f"GitTracker will no longer track:\n\t{removed_fmt}\n")
+        print(f"\n\033[32mGitTracker will no longer track\033[0m:\n\t{removed_fmt}\n")
     else:
         exit(1)
 
