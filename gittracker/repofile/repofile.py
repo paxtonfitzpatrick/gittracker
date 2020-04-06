@@ -213,13 +213,13 @@ def manual_add(repo_paths):
             if full_path in load_tracked_repos(init_on_fail=False):
                 # don't add a duplicate if the repository is already being tracked
                 print(f"\n\033[31m{full_path} is already tracked by "
-                      "GitTracker\033[0m")
+                      "GitTracker\033[0m\n")
             else:
                 with open(TRACKED_REPOS_FPATH, 'a') as f:
                     f.write(f"{full_path}\n")
                 print(f"\nGitTracker: repository '{basename(full_path)}' "
                       "stored for tracking in logfile at:\n\t"
-                      f"{TRACKED_REPOS_FPATH}")
+                      f"{TRACKED_REPOS_FPATH}\n")
 
 
 def manual_remove(repo_paths, confirm=True):
@@ -249,13 +249,13 @@ def manual_remove(repo_paths, confirm=True):
             else:
                 print(f"{full_path} not removed")
         except ValueError:
-            print(f"\033[31m{full_path} is not currently tracked by GitTracker."
-                  "\033[0m\nYou can view the currently tracked repositories "
-                  "with:\n\tgittracker ls")
+            print(f"\n\033[31m{full_path} is not currently tracked by GitTracker."
+                  "\033[0m\n\nYou can view the currently tracked repositories "
+                  "with:\n\tgittracker ls\n")
 
     if any(removed):
         removed_fmt = '\n\t'.join(removed)
-        print(f"GitTracker will no longer track:\n\t{removed_fmt}")
+        print(f"GitTracker will no longer track:\n\t{removed_fmt}\n")
     else:
         exit(1)
 
