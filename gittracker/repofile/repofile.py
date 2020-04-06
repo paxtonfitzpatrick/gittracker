@@ -193,6 +193,7 @@ def load_tracked_repos(init_on_fail=True):
 
 @log_error
 def manual_add(repo_paths):
+    added = []
     for repo_path in repo_paths:
         full_path = cleanpath(repo_path)
         try:
@@ -215,11 +216,18 @@ def manual_add(repo_paths):
                 print(f"\n\033[31m{full_path} is already tracked by "
                       "GitTracker\033[0m\n")
             else:
-                with open(TRACKED_REPOS_FPATH, 'a') as f:
-                    f.write(f"{full_path}\n")
-                print(f"\nGitTracker: repository '{basename(full_path)}' "
-                      "stored for tracking in logfile at:\n\t"
-                      f"{TRACKED_REPOS_FPATH}\n")
+                added.append(full_path)
+
+    if any(added):
+        with open(TRACKED_REPOS_FPATH, 'a') as f:
+            for path in added:
+                f.write(path)
+                f.write('\n')
+
+        suffix = 'ies' if len(added) > 1 else 'y'
+        added_fmt = '\n\t'.join(added)
+        print(f"\n\033[32mGitTracker: tracking {len(added)} new "
+              f"repositor{suffix}\033[0m:\n\t{added_fmt}\n")
 
 
 def manual_remove(repo_paths, confirm=True):
