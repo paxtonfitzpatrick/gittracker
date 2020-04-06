@@ -83,7 +83,7 @@ class Displayer:
         elif n_good == 0:
             # or, if all repos have unpushed changes, report them as "all"
             # having unpushed changes and color the full message red
-            summary_msg = "all with unpushed changes"
+            summary_msg = "all with changes"
             summary_msg_fmt = self.format_value_text(
                 value=summary_msg,
                 style='red'
@@ -99,8 +99,7 @@ class Displayer:
                 value=n_bad,
                 style=('bold', 'red')
             )
-            summary_msg_fmt = f"{n_good_fmt} up-to-date, {n_bad_fmt} with " \
-                              "unpushed changes"
+            summary_msg_fmt = f"{n_good_fmt} up-to-date, {n_bad_fmt} with changes"
         # mapping for self.outer_template
         template_mapping = {
             'pkg_ascii_logo': self.logo,
@@ -153,13 +152,22 @@ class Displayer:
         n_bad = 0
         for repo_path, repo_status in self.repos.items():
             repo_name = basename(repo_path)
-            if isinstance(repo_status, (str, dict)):
-                # if the HEAD is either dirty or detached
-                style = 'red'
-                n_bad += 1
-            else:
+            if isinstance(repo_status, dict) and not any(
+                repo_status[k] for k in (
+                        'n_commits_ahead',
+                        'n_commits_behind',
+                        'n_staged',
+                        'n_not_staged',
+                        'n_untracked'
+                )
+            ):
                 style = 'green'
                 n_good += 1
+            else:
+                # either there are new changes or HEAD is detached
+                style = 'red'
+                n_bad += 1
+
             repo_name_fmt = self.format_value_text(value=repo_name, style=style)
             template_mapping = {'repo_name': repo_name_fmt}
             full_repo_template = self.repo_template.safe_substitute(template_mapping)

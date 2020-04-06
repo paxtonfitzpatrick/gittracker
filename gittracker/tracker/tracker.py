@@ -30,17 +30,11 @@ def get_status(repo_paths, verbose=2, follow_submodules=0):
     for path in repo_paths:
         repo = Repo(path)
         # this can either mean repo is up-to-date or HEAD is detached
-        if not repo.is_dirty():
-            if repo.head.is_detached:
-                # if HEAD is detached, just report its commit hash...
-                sha_shortened = repo.head.object.hexsha[:7]
-                changes[path] = f'HEAD detached at {sha_shortened}'
-                continue
-            elif verbose == 1:
-                # ...or, if everything is up-to-date and that's all we care about
-                # (i.e., because verbosity is low), then no need to check further
-                changes[path] = None
-                continue
+        if repo.head.is_detached:
+            # if HEAD is detached, just report its commit hash...
+            sha_shortened = repo.head.object.hexsha[:7]
+            changes[path] = f'HEAD detached at {sha_shortened}'
+            continue
 
         raw_changes = _single_repo_status(
             repo,
@@ -69,29 +63,16 @@ def _single_repo_status(repo, verbose, follow_submodules):
     """
     # TODO (future): option to get info about branches other than current
     status = {
-        # str if verbose == 3
         'local_branch': None,
-        # str if verbose == 3
         'remote_branch': None,
-        # int if verbose >= 2
         'n_commits_ahead': None,
-        # int if verbose >= 2
         'n_commits_behind': None,
-        # int if verbose >= 2
         'n_staged': None,
-        # list of (change type, old filepath, new filepath) if verbose == 3
-        # if change type wasn't a rename, then new filepath is None
         'files_staged': None,
-        # int if verbose >= 2
         'n_not_staged': None,
-        # list of (change type, filepath) if verbose == 3
         'files_not_staged': None,
-        # int if verbose >= 2
         'n_untracked': None,
-        # list of filepaths if verbose == 3
         'files_untracked': None,
-        # dict of {path: status} pairs if follow_submodules is True and the repo
-        # contains any submodules.
         'submodules': None
     }
 
