@@ -61,6 +61,14 @@ ${repo_name}
 """
 )
 
+# format skeleton for submodules
+# (analogous to SINGLE_REPO_V1 template; only used with SINGLE_REPO_V2)
+SINGLE_SUBMODULE = Template(
+"""\
+\t${submodule_path}: ${submodule_info}\
+"""
+)
+
 # mapping of single repository templates by verbosity value
 REPO_TEMPLATES = {
     0: SINGLE_REPO_V0,

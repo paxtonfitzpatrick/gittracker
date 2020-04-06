@@ -95,57 +95,56 @@ def _single_repo_status(repo, verbose, follow_submodules):
         'submodules': None
     }
 
-    if verbose > 0:
-        local_branch = repo.active_branch
-        local_branch_name = local_branch.name
-        try:
-            remote_branch_name = local_branch.tracking_branch().name
-            n_ahead = len(list(repo.iter_commits(
-                f"{remote_branch_name}..{local_branch_name}"
-            )))
-            n_behind = len(list(repo.iter_commits(
-                f"{local_branch_name}..{remote_branch_name}"
-            )))
-        except AttributeError:
-            # local branch isn't tracking a remote
-            remote_branch_name = ''
-            n_ahead = None
-            n_behind = None
+    local_branch = repo.active_branch
+    local_branch_name = local_branch.name
+    try:
+        remote_branch_name = local_branch.tracking_branch().name
+        n_ahead = len(list(repo.iter_commits(
+            f"{remote_branch_name}..{local_branch_name}"
+        )))
+        n_behind = len(list(repo.iter_commits(
+            f"{local_branch_name}..{remote_branch_name}"
+        )))
+    except AttributeError:
+        # local branch isn't tracking a remote
+        remote_branch_name = ''
+        n_ahead = None
+        n_behind = None
 
-        headcommit = repo.head.commit
-        staged = repo.index.diff(headcommit)
-        unstaged = repo.index.diff(None)
-        untracked = repo.untracked_files
-        status['local_branch'] = local_branch_name
-        status['remote_branch'] = remote_branch_name
-        status['n_commits_ahead'] = n_ahead
-        status['n_commits_behind'] = n_behind
-        status['n_staged'] = len(staged)
-        status['n_not_staged'] = len(unstaged)
-        status['n_untracked'] = len(untracked)
+    headcommit = repo.head.commit
+    staged = repo.index.diff(headcommit)
+    unstaged = repo.index.diff(None)
+    untracked = repo.untracked_files
+    status['local_branch'] = local_branch_name
+    status['remote_branch'] = remote_branch_name
+    status['n_commits_ahead'] = n_ahead
+    status['n_commits_behind'] = n_behind
+    status['n_staged'] = len(staged)
+    status['n_not_staged'] = len(unstaged)
+    status['n_untracked'] = len(untracked)
 
-        if verbose == 2:
-            # go through any staged changes manually to handle renames
-            files_staged = []
-            for diff in staged:
-                a_path = diff.a_path
-                change_type = diff.change_type
-                b_path = diff.b_path if change_type == 'R' else None
-                files_staged.append((change_type, a_path, b_path))
+    if verbose == 2:
+        # go through any staged changes manually to handle renames
+        files_staged = []
+        for diff in staged:
+            a_path = diff.a_path
+            change_type = diff.change_type
+            b_path = diff.b_path if change_type == 'R' else None
+            files_staged.append((change_type, a_path, b_path))
 
-            status['files_staged'] = files_staged
-            status['files_not_staged'] = list(
-                map(lambda d: (d.change_type, d.a_path), unstaged)
-            )
-            status['files_untracked'] = untracked
+        status['files_staged'] = files_staged
+        status['files_not_staged'] = list(
+            map(lambda d: (d.change_type, d.a_path), unstaged)
+        )
+        status['files_untracked'] = untracked
 
-        if follow_submodules > 0 and any(repo.submodules):
-            submodules = {}
-            for sm in repo.submodules:
-                sm_status = _submodule_status(sm, depth=follow_submodules)
-                submodules[sm.path] = sm_status
+    if follow_submodules > 0 and any(repo.submodules):
+        submodules = {}
+        for sm in repo.submodules:
+            sm_status = _submodule_status(sm, depth=follow_submodules)
+            submodules[sm.path] = sm_status
 
-            status['submodules'] = submodules
+        status['submodules'] = submodules
 
     return status
 
@@ -168,12 +167,12 @@ def _submodule_status(submodule, depth=1):
     """
     # TODO: Function needs testing
     # TODO: once expandable GUI view is finished, can allow variable verbosity.
-    #  For now, pinning to 1 regardless of parent `verbose` value
+    #  For now, pinning to 0 regardless of parent `verbose` value
     try:
         submodule_repo = submodule.module()
         sm_status = _single_repo_status(
             submodule_repo,
-            verbose=1,
+            verbose=0,
             follow_submodules=depth - 1)
         return sm_status, None
 

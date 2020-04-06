@@ -35,7 +35,8 @@ class CommandParser(ArgumentParser):
         for cmd in self.subcommands:
             cmd.prog = f"{self.prog} {cmd.name}"
 
-    # TODO: add custom string help formatting class
+    def __eq__(self, other):
+        return other in self.all_names
 
     @property
     def all_names(self):
@@ -49,7 +50,7 @@ class CommandParser(ArgumentParser):
     def default_subcommand(self, cmd):
         if cmd not in self.subcommands:
             raise ValueError("default subcommand must be an available subcommand")
-        self._default_subcommand = cmd
+        self._default_subcommand = self.subcommands[self.subcommands.index(cmd)]
 
     @default_subcommand.getter
     def get_default_subcommand(self):
@@ -57,9 +58,6 @@ class CommandParser(ArgumentParser):
             return self._default_subcommand
         else:
             raise ValueError("default subcommand not set")
-
-    def __eq__(self, other):
-        return other in self.all_names
 
     @staticmethod
     def _format_subcmd_help(cmd, formatter):
@@ -127,7 +125,7 @@ class CommandParser(ArgumentParser):
             # no positional or optional args were passed
             try:
                 # use the default subcommand
-                cmd = self.get_default_subcommand()
+                cmd = self.get_default_subcommand
             except ValueError:
                 # no default subcommand set
                 cmd = None

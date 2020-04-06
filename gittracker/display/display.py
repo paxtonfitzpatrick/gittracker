@@ -7,7 +7,8 @@ from .templates import (
     REPO_TEMPLATES,
     SINGLE_CHANGE_STATE,
     SINGLE_FILE_CHANGE,
-    SINGLE_REPO_DETACHED
+    SINGLE_REPO_DETACHED,
+    SINGLE_SUBMODULE
 )
 from ..utils.utils import clear_display
 
@@ -108,7 +109,11 @@ class Displayer:
             'line_sep': '=' * self.display_width,
             'repos_status': '\n'.join(full_repo_templates)
         }
-        self.full_template = self.outer_template.safe_substitute(template_mapping)
+        full_template = self.outer_template.safe_substitute(template_mapping)
+        # cleans up template formatting for verbosity level 2
+        # in cases where repos have no uncommitted changes
+        full_template = full_template.replace('    \n', '\n')
+        self.full_template = full_template.replace('\n\n\n', '\n\n')
 
     def format_value_text(self, value, style=None):
         """
@@ -382,13 +387,22 @@ class Displayer:
                         )
                         full_state_templates.append(full_state_template)
 
+                repo_submodules = repo_status['submodules']
+                if repo_submodules is not None:
+                    full_sm_templates, submodules_clean = self._format_submodules(
+                        repo_submodules
+                    )
+                    full_state_templates.append("submodules:")
+                    full_state_templates.append('\n'.join(full_sm_templates))
+                    if not submodules_clean:
+                        good_vs_remote = False
+
+                template_mapping['change_states'] = '\n    '.join(
+                    full_state_templates
+                )
                 if name_color == 'green' and good_vs_remote:
-                    template_mapping['change_states'] = ''
                     n_good += 1
                 else:
-                    template_mapping['change_states'] = '\n    '.join(
-                        full_state_templates
-                    )
                     n_bad += 1
             template_mapping['repo_name'] = self.format_value_text(
                 value=basename(repo_path),
@@ -398,6 +412,45 @@ class Displayer:
             full_repo_templates.append(full_repo_template)
         return full_repo_templates, n_good, n_bad
 
+    def _format_submodules(self, submodules):
+        full_sm_templates = []
+        # re-use verbosity level 0 template
+        sm_template = SINGLE_SUBMODULE
+        all_good = True
+        for sm_path, sm_status in submodules.items():
+            sm_template_mapping = {'submodule_path': sm_path}
+            # format should be (standard info, alternate info)
+            assert isinstance(sm_status, tuple) and len(sm_status) == 2
+            sm_dict, sm_msg = sm_status
+            if isinstance(sm_msg, str):
+                if sm_msg.startswith('HEAD'):
+                    # submodule is in a detatched HEAD state
+                    sm_info = self.format_value_text(value=sm_msg, style='red')
+                    all_good = False
+                else:
+                    # submodule is not initialized
+                    sm_info = sm_msg
+
+            elif sm_dict is None:
+                # everything is up-to-date
+                sm_info = self.format_value_text(
+                    value="working tree is clean",
+                    style='green'
+                )
+            else:
+                # sm_dict is a dict of all None's; working tree is dirty
+                sm_info = self.format_value_text(
+                    value="working tree is dirty",
+                    style='red'
+                )
+                all_good = False
+
+            sm_template_mapping['submodule_info'] = sm_info
+            full_sm_template = sm_template.safe_substitute(sm_template_mapping)
+            full_sm_templates.append(full_sm_template)
+
+        return full_sm_templates, all_good
+
     def display(self):
         if self.outfile is not None:
             # either write the output to a file...
@@ -406,7 +459,7 @@ class Displayer:
             confirm_msg = self.format_value_text(value=confirm_msg, style='green')
             print(confirm_msg)
         else:
-            clear_display()
             # ...or print it to the screen
+            clear_display()
             print(self.full_template)
 
