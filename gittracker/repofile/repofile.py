@@ -320,13 +320,13 @@ def validate_tracked():
         except GitTrackerError as e:
             if isinstance(e, RepoNotFoundError):
                 error_info = "\n\033[31mPreviously tracked repository at " \
-                             f"{repo_path} appears to no longer exist\033[0m. " \
+                             f"{repo_path} appears to no longer exist\033[0m.\n" \
                              "Has the repository been moved or deleted?"
 
             elif isinstance(e, RepoNotFoundError):
                 error_info = "\n\033[31mPreviously tracked directory at " \
                              f"{repo_path} appears to no longer be a git " \
-                             "repository (no .git directory found)\033[0m. " \
+                             "repository (no .git directory found)\033[0m.\n" \
                              "Has the repository been moved or deleted?"
             else:
                 # unexpected exception occurred -- theoretically should never
