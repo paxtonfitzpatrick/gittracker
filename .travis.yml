@@ -1,0 +1,27 @@
+language: python
+
+matrix:
+  include:
+    # actual Python version used for testing specified
+    # in `env` below and installed in `install.sh`
+    - python: 3.6
+    os: linux
+    - env: PYTHON_VERSION="3.6"
+
+    os: linux
+    - env: PYTHON_VERSION="3.7"
+
+    os: linux
+    - env: PYTHON_VERSION="3.8"
+
+    os: osx
+    language: generic
+    - env: PYTHON_VERSION="3.6"
+
+    os: windows
+    lanugage: shell
+    - env: PYTHON_VERSION="3.6"
+
+before_install: source .test/ci_scipts/before_install.sh
+install: source .tests/ci_scripts/install.sh
+script: pytest -v tests/tests
