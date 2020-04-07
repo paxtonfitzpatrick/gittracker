@@ -19,6 +19,6 @@ matrix:
       os: windows
       lanugage: shell
 
-before_install: source .tests/ci-scipts/before_install.sh
-install: source .tests/ci-scripts/install.sh
+before_install: source tests/ci-scipts/before_install.sh
+install: source tests/ci-scripts/install.sh
 script: pytest -v tests/tests
