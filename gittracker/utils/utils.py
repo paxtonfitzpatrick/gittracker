@@ -84,9 +84,6 @@ def prompt_input(prompt, default=None, possible_bug=False):
     :return: bool
             True for affirmative response, False for negative
     """
-    assert default in ('yes', 'no', None), \
-        "Default response must be either 'yes', 'no', or None"
-
     valid_responses = {
         'yes': True,
         'y': True,

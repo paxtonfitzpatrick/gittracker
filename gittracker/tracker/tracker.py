@@ -73,7 +73,7 @@ def _single_repo_status(repo, verbose, follow_submodules):
             repository, though many are set to None at lower
             `verbose` values
     """
-    # TODO (future): option to get info about branches other than current
+    # TODO (future?): option to get info about branches other than current
     status = {
         'local_branch': None,
         'remote_branch': None,
