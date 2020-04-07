@@ -22,6 +22,6 @@ matrix:
     lanugage: shell
     - env: PYTHON_VERSION="3.6"
 
-before_install: source .test/ci_scipts/before_install.sh
-install: source .tests/ci_scripts/install.sh
+before_install: source .tests/ci-scipts/before_install.sh
+install: source .tests/ci-scripts/install.sh
 script: pytest -v tests/tests
