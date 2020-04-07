@@ -7,7 +7,7 @@ from sys import exit, platform
 from traceback import print_exception
 from .exceptions import BugIdentified, RepoNotFoundError, NoGitdirError
 
-LOG_DIR = Path(Path(__file__).resolve().parents[1], 'log')
+LOG_DIR = Path(__file__).resolve().parents[1].joinpath('log')
 LOGFILE_PATH = Path(LOG_DIR, 'logfile')
 GITHUB_URL = "https://github.com/paxtonfitzpatrick/gittracker/issues/new"
 BUG_MSG = "\n\nUh oh! Looks like you might have encountered a bug, please " \
