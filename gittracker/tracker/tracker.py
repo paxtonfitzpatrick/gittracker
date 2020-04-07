@@ -1,4 +1,6 @@
+from shutil import get_terminal_size
 from git import Repo, InvalidGitRepositoryError
+from tqdm import tqdm
 
 
 def get_status(repo_paths, verbose=2, follow_submodules=0):
@@ -26,8 +28,18 @@ def get_status(repo_paths, verbose=2, follow_submodules=0):
             is in a detached HEAD state, `changes` will be
             a string instead.
     """
+    # show a progress bar if number of repositories parsed is
+    # enough to cause an appreciable wait time
+    pbar_off = False if len(repo_paths) > 10 else True
+    ncols = get_terminal_size().columns
     changes = dict.fromkeys(repo_paths)
-    for path in repo_paths:
+    for path in tqdm(
+            repo_paths,
+            unit=' repo',
+            ncols=ncols,
+            leave=False,
+            disable=pbar_off
+    ):
         repo = Repo(path)
         # this can either mean repo is up-to-date or HEAD is detached
         if repo.head.is_detached:
