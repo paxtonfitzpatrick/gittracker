@@ -1,4 +1,7 @@
-include LICENSE
+# not included by default for setuptools<36.4.0
 include README.md
 
-graft bin
+# not included by default for setuptools<40.8.0
+include LICENSE
+
+graft gittracker/log
