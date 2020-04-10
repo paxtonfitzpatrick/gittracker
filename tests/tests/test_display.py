@@ -4,4 +4,3 @@
 
 def test_verbose_template_assignment():
     assert True
-    

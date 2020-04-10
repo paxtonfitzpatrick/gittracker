@@ -1,12 +1,14 @@
 # tests for command line interface
-import subprocess
+from pathlib import PurePath
+from subprocess import run
+from shlex import split
 from gittracker.parsers.subcommands import SUBCOMMANDS
 
 
 def run_command(cmd):
     # replacement for os.system that works with windows
     cmd = cmd.split()
-    retcode = subprocess.run(cmd, shell=True).returncode
+    retcode = run(cmd).returncode
     return retcode
 
 
