@@ -1,27 +1,18 @@
 # tests for command line interface
-from pathlib import PurePath
-from subprocess import run
-from shlex import split
 from gittracker.parsers.subcommands import SUBCOMMANDS
-
-
-def run_command(cmd):
-    # replacement for os.system that works with windows
-    cmd = cmd.split()
-    retcode = run(cmd).returncode
-    return retcode
+from .helpers import test_input
 
 
 def test_entrypoint():
-    # did the entrypoint get correctly installed?
-    exit_status = run_command("gittracker --help")
-    assert exit_status == 0
+    # is the app accessible via its entrypoi?
+    retcode, stderr = test_input("gittracker --help")
+    assert retcode == 0, stderr
 
 
 def test_module():
     # can the package still be run as a module?
-    exit_status = run_command("python -m gittracker --help")
-    assert exit_status == 0
+    retcode, stderr = test_input("python -m gittracker --help")
+    assert retcode == 0, stderr
 
 
 def test_subcommands_available():
@@ -30,5 +21,13 @@ def test_subcommands_available():
         # test regular name and aliased names
         for name in subcommand.all_names:
             full_command = f"gittracker {name} --help"
-            exit_status = run_command(full_command)
-            assert exit_status == 0, f"{full_command} failed"
+            retcode, stderr = test_input(full_command)
+            assert retcode == 0, stderr
+
+
+def test_bad_input():
+    # test failure on unsupported argument passed
+    for subcommand in [''] + SUBCOMMANDS:
+        full_command = f"gittracker {subcommand} foo"
+        retcode, stderr = test_input(full_command)
+        assert retcode != 0
