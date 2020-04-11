@@ -3,7 +3,7 @@ from pathlib import PurePath
 from subprocess import PIPE, run
 
 
-def test_input(cmd):
+def run_command(cmd):
     # helper function that formats and tests command line input
     # split args
     cmd = shlex.split(cmd)
