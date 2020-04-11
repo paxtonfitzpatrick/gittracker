@@ -25,7 +25,7 @@ def test_subcommands_available():
             assert retcode == 0, stderr
 
 
-def test_bad_input():
+def test_bad_arg():
     # test failure on unsupported argument passed
     for subcommand in [''] + SUBCOMMANDS:
         full_command = f"gittracker {subcommand} foo"
