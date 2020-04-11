@@ -5,13 +5,13 @@ from .helpers import run_command
 
 def test_entrypoint():
     # is the app accessible via its entrypoint?
-    retcode, stderr = run_command("gittracker --help")
+    retcode, stdout, stderr = run_command("gittracker --help")
     assert retcode == 0, stderr
 
 
 def test_module():
     # can the package still be run as a module?
-    retcode, stderr = run_command("python -m gittracker --help")
+    retcode, stdout, stderr = run_command("python -m gittracker --help")
     assert retcode == 0, stderr
 
 
@@ -21,7 +21,7 @@ def test_subcommands_available():
         # test regular name and aliased names
         for name in subcommand.all_names:
             full_command = f"gittracker {name} --help"
-            retcode, stderr = run_command(full_command)
+            retcode, stdout, stderr = run_command(full_command)
             assert retcode == 0, stderr
 
 
@@ -29,5 +29,5 @@ def test_bad_arg():
     # test failure on unsupported argument passed
     for subcommand in [''] + SUBCOMMANDS:
         full_command = f"gittracker {subcommand} foo"
-        retcode, stderr = run_command(full_command)
+        retcode, stdout, stderr = run_command(full_command)
         assert retcode != 0

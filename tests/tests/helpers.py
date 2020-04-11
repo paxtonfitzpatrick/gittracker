@@ -9,5 +9,5 @@ def run_command(cmd):
     cmd = shlex.split(cmd)
     # deal with POSIX/Windows path formatting
     cmd = [str(PurePath(arg)) if '/' in arg else arg for arg in cmd]
-    result = run(cmd, stderr=PIPE)
-    return result.returncode, result.stderr
+    result = run(cmd, stdout=PIPE, stderr=PIPE)
+    return result.returncode, result.stdout, result.stderr
