@@ -28,12 +28,17 @@ def test_subcommands_available():
 def test_all_args_in_help():
     # test whether each argument is shown in help output for given command
     for subcommand in SUBCOMMANDS:
-        full_command = f"gittracker {subcommand} --help"
+        cmd = subcommand.name
+        full_command = f"gittracker {cmd} --help"
         _, help_msg, _ = run_command(full_command)
         for action in subcommand._actions:
-            arg = action.dest
-            assert arg in help_msg, f"`{arg}` arg for `{subcommand.name}` " \
-                                    "command not listed in `--help` output"
+            if not any(action.option_strings):
+                arg = action.metavar
+            else:
+                # longest option string is full arg name
+                arg = max(action.option_strings, key=len)
+            assert arg in help_msg, f"`{arg}` arg for `{cmd}` command not " \
+                                    "listed in `--help` output"
 
 
 def test_bad_arg():
@@ -49,7 +54,7 @@ def test_version():
     from gittracker import __version__ as init_version
     retcode, stdout, stderr = run_command("gittracker --version")
     assert retcode == 0, stderr
-    cli_version = stdout.split(': ')
+    cli_version = stdout.split(': ')[1].strip()
     assert cli_version == init_version, "versions from CLI command and " \
                                         "__init__.py not equal"
     assert cli_version.count('.') == init_version.count('.') == 2, "version string malformed"
