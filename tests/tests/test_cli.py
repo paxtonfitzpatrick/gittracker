@@ -1,4 +1,7 @@
 # tests for command line interface
+from os import listdir
+from os.path import isdir
+from gittracker import __version__ as init_version
 from gittracker.parsers.subcommands import SUBCOMMANDS
 from .helpers import run_command
 
@@ -51,10 +54,18 @@ def test_bad_arg():
 
 def test_version():
     # test whether version info was set/updated correctly
-    from gittracker import __version__ as init_version
     retcode, stdout, stderr = run_command("gittracker --version")
     assert retcode == 0, stderr
     cli_version = stdout.split(': ')[1].strip()
     assert cli_version == init_version, "versions from CLI command and " \
                                         "__init__.py not equal"
     assert cli_version.count('.') == init_version.count('.') == 2, "version string malformed"
+
+
+def test_log_dir():
+    retcode, stdout, stderr = run_command("gittracker --log-dir")
+    assert retcode == 0, stderr
+    log_dir = stdout.splitlines()[-1].strip()
+    assert isdir(log_dir), f"logfile directory doesn't exist, expected at: {log_dir}"
+    assert 'logfile' in listdir(log_dir), "missing logfile"
+    assert 'tracked-repos' in listdir(log_dir), "missing tracked repositories file"
