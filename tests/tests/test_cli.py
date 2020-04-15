@@ -3,7 +3,7 @@ from os import listdir
 from os.path import isdir
 from gittracker import __version__ as init_version
 from gittracker.parsers.subcommands import SUBCOMMANDS
-from .helpers import run_command
+from ..helpers.helpers import run_command
 
 
 def test_entrypoint():
