@@ -1,0 +1,12 @@
+~/mock-repos/even-clean
+~/mock-repos/commits-ahead
+~/mock-repos/commits-behind
+~/mock-repos/commits-ahead-behind
+~/mock-repos/non-master-branch
+~/mock-repos/no-remote
+~/mock-repos/detached-head
+~/mock-repos/no-history
+~/mock-repos/staged-files
+~/mock-repos/unstaged-files
+~/mock-repos/untracked-files
+~/mock-repos/submodules
