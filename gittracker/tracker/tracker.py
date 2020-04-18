@@ -28,9 +28,9 @@ def get_status(repo_paths, verbose=2, follow_submodules=0):
             is in a detached HEAD state, `changes` will be
             a string instead.
     """
-    # show a progress bar if number of repositories parsed is
-    # enough to cause an appreciable wait time
-    pbar_off = False if len(repo_paths) > 10 else True
+    # show a progress bar if number of repositories parsed is enough to
+    # cause an appreciable wait time
+    pbar_off = len(repo_paths) < 10
     ncols = get_terminal_size().columns
     changes = dict.fromkeys(repo_paths)
     for path in tqdm(
@@ -41,21 +41,28 @@ def get_status(repo_paths, verbose=2, follow_submodules=0):
             disable=pbar_off
     ):
         repo = Repo(path)
-        # this can either mean repo is up-to-date or HEAD is detached
-        if repo.head.is_detached:
-            # if HEAD is detached, just report its commit hash...
-            sha_shortened = repo.head.object.hexsha[:7]
-            changes[path] = f'HEAD detached at {sha_shortened}'
-            continue
-
-        raw_changes = _single_repo_status(
+        changes[path] = _single_repo_status(
             repo,
             verbose=verbose,
             follow_submodules=follow_submodules
         )
-        changes[path] = raw_changes
 
     return changes
+
+    #     # if HEAD is detached, just report its commit hash...
+    #     if repo.head.is_detached:
+    #         sha_shortened = repo.head.object.hexsha[:7]
+    #         changes[path] = f'HEAD detached at {sha_shortened}'
+    #         continue
+    #
+    #     raw_changes = _single_repo_status(
+    #         repo,
+    #         verbose=verbose,
+    #         follow_submodules=follow_submodules
+    #     )
+    #     changes[path] = raw_changes
+    #
+    # return changes
 
 
 def _single_repo_status(repo, verbose, follow_submodules):
@@ -87,6 +94,16 @@ def _single_repo_status(repo, verbose, follow_submodules):
         'files_untracked': None,
         'submodules': None
     }
+
+    try:
+        headcommit = repo.head.commit
+
+    except ValueError:
+        raise NotImplemented(
+            "GitTracker currently doesn't support tracking newly "
+            "initialized repositories"
+        )
+
 
     local_branch = repo.active_branch
     local_branch_name = local_branch.name
