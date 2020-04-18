@@ -1,7 +1,7 @@
 from collections import namedtuple
 from configparser import ConfigParser
 from pathlib import Path
-from .helpers import CONVERTERS
+from .functions import CONVERTERS
 
 
 class MockRepo:
