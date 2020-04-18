@@ -83,7 +83,7 @@ def _single_repo_status(repo, verbose, follow_submodules):
         headcommit = repo.head.commit
 
     except ValueError as e:
-        raise NotImplemented(
+        raise InvalidGitRepositoryError(
             "GitTracker currently doesn't support tracking newly "
             "initialized repositories"
         ) from e
