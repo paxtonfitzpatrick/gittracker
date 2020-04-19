@@ -5,6 +5,9 @@ from shutil import copy2
 from subprocess import PIPE, run
 
 
+FILES_DIR = Path(__file__).resolve().parents[1].joinpath('files')
+
+
 def run_command(cmd):
     """helper function that formats and tests command line input"""
     # split args
@@ -13,6 +16,13 @@ def run_command(cmd):
     cmd = [str(Path(arg)) if '/' in arg else arg for arg in cmd]
     result = run(cmd, stdout=PIPE, stderr=PIPE, encoding='UTF-8')
     return result.returncode, result.stdout, result.stderr
+
+
+def add_config(filename, dest_dir):
+    src = FILES_DIR.joinpath(filename)
+    assert src.is_file()
+    assert dest_dir.is_dir()
+    copy2(src, dest_dir)
 
 
 ###########################################
