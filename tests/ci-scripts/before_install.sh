@@ -6,7 +6,7 @@ fi
 
 # set conda path
 echo "setting conda path"
-export MINICONDA_PATH=$HOME/miniconda
+export MINICONDA_PATH="$HOME"/miniconda
 export MINICONDA_LIB_BIN_PATH=$MINICONDA_PATH/Library/bin
 
 if [[ "$TRAVIS_OS_NAME" == "windows" ]]
@@ -21,12 +21,12 @@ fi
 # (Windows will use choco to install miniconda instead)
 if [[ "$TRAVIS_OS_NAME" == "linux" ]]
 then
-  mkdir -p $HOME/download
+  mkdir -p "$HOME"/download
   echo "downloading miniconda installer for linux"
-  wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O $HOME/download/miniconda.sh
+  wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O "$HOME"/download/miniconda.sh
 elif [[ "$TRAVIS_OS_NAME" == "osx" ]]
 then
-  mkdir -p $HOME/download
+  mkdir -p "$HOME"/download
   echo "downloading miniconda installer for MacOS"
-  wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O $HOME/download/miniconda.sh
+  wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O "$HOME"/download/miniconda.sh
 fi
