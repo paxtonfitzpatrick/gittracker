@@ -26,7 +26,3 @@ conda activate test-environment
 # install package with pip to test pip installation process
 pip install --quiet --upgrade pip
 pip install .
-
-# create directory for mock repositories
-export MOCK_REPOS_DIR=$HOME/mock-repos
-mkdir "$MOCK_REPOS_DIR"
