@@ -170,15 +170,18 @@ def _submodule_status(submodule, depth=1):
         sm_status = _single_repo_status(
             submodule_repo,
             verbose=1,
-            follow_submodules=depth - 1)
+            follow_submodules=depth - 1
+        )
         return sm_status, None
 
     except TypeError:
+        # submodule is in a detached HEAD state
         sm_sha_shortened = submodule.hexsha[:7]
         msg = f'HEAD detached at {sm_sha_shortened}'
         return None, msg
 
     except InvalidGitRepositoryError:
+        # submodule hasn't been initialized
         msg = 'not initialized'
         return None, msg
 
