@@ -37,6 +37,17 @@ def _get_multiline_list(val):
     return val.splitlines()[1:]
 
 
+def _get_dict(val):
+    """
+    splits a newline separated list of values for a single option
+    (where each option takes the format `sub-option = sub-value`) into a
+    dictionary with the format `{sub-option: sub-value}`
+    NOTE: first item should be on a different line from the option key
+    """
+    keys_vals = val.splitlines()[1:]
+    return {k: v for k, v in map(lambda x: x.split(' = '), keys_vals)}
+
+
 def _get_diff_list(val):
     """
     specifcally for use in the MockIndex class; splits a
@@ -52,6 +63,7 @@ def _get_diff_list(val):
 
 CONVERTERS = {
     'difflist': _get_diff_list,
+    'dict': _get_dict,
     'list': _get_multiline_list
 }
 
