@@ -1,7 +1,8 @@
 from collections import namedtuple
 from configparser import ConfigParser
 from pathlib import Path
-from .functions import CONVERTERS
+from git import InvalidGitRepositoryError
+from .functions import CONVERTERS, add_config
 
 
 class MockRepo:
@@ -11,11 +12,11 @@ class MockRepo:
         self.config = self._load_config()
 
         self.untracked_files = self.config.getlist('repo', 'untracked_files')
-        self.submodules = self.config.getsubmodules('repo', 'submodules')
 
         self.active_branch = self.MockActiveBranch(self.config['active_branch'])
         self.head = self.MockHead(self.config['head'])
         self.index = self.MockIndex(self.config['index'])
+        self.submodules = self._setup_submodules(self.config['submodules'])
 
     def _load_config(self):
         config_path = self.repo_path.joinpath(f"{self.repo_path.name}.cfg")
@@ -24,6 +25,22 @@ class MockRepo:
             config.read_file(f)
         return config
 
+    def _setup_submodules(self, submodules_config):
+        submodules_dict = submodules_config.getdict('paths_configs')
+        submodules = []
+        for sm_path, sm_config in submodules_dict.items():
+            # get the absolute path for the submodule directory
+            full_path = self.repo_path.joinpath(sm_path)
+            # create the new directory and any parents
+            full_path.mkdir(parents=True)
+            # add a .git directory (needed for creating MockRepo from submodule)
+            full_path.joinpath('.git').mkdir()
+            # copy in the submodule's config file
+            add_config(sm_config, full_path)
+            # create a MockSubmodule object
+            submodules.append(MockSubmodule(sm_path, self.repo_path))
+        return submodules
+
     def _validate_repo(self, repo_path):
         """
         converts path to a pathlib.Path object and ensures that:
@@ -31,15 +48,13 @@ class MockRepo:
             - mock repository was created at the given path
             - the correct config file was copied there during setup
             - a .git subdirectory was created during setup
-            - no other files or directories were inadvertently put there
         """
         repo_path = Path(repo_path).resolve()
         # make sure it exists
         assert repo_path.is_dir()
-        contents = list(repo_path.glob('*'))
-        assert len(contents) == 2
         # correct config file shares name with repository
         assert repo_path.joinpath(f'{repo_path.name}.cfg').is_file()
+        # necessary to pass some checks in main module
         assert repo_path.joinpath('.git').is_dir()
         return repo_path
 
@@ -71,9 +86,8 @@ class MockRepo:
                 n_commits = self.n_commits_ahead
             else:
                 n_commits = self.n_commits_behind
-
+            # arbitrary generated value (we only care about the number)
             for _ in range(n_commits):
-                # generated value since we only care about the number
                 yield "dummy_commit_object"
 
         def tracking_branch(self):
@@ -134,3 +148,39 @@ class MockRepo:
                 # types locally defined in different namespace)
                 assert type(other).__name__ == 'HeadCommit'
                 return self.staged_changes
+
+
+class MockSubmodule:
+    """
+    patch for git.objects.Submodule
+
+    Apart from the abaility to instantiate `git.Repo` object, we only
+    need to patch the `path` and `hexsha` attributes from `git.Submodule`.
+    Other attrs are used to mock behavior of submodules that are either
+    in a detached HEAD state or not yet initialized.
+    """
+    def __init__(self, path, parent_path):
+        self.path = path
+        self._full_path = parent_path.joinpath(self.path)
+
+        config = self._load_config()
+        self.hexsha = config.get('head', 'hexsha')
+        self._is_detached = config.getboolean('head', 'is_detached')
+        self._is_initialized = not config.getboolean('head', '_is_empty')
+
+    def _load_config(self):
+        config_path = self._full_path.joinpath(f"{self._full_path.name}.cfg")
+        config = ConfigParser(converters=CONVERTERS)
+        with open(config_path, 'r') as f:
+            config.read_file(f)
+        return config
+
+    def module(self):
+        if self._is_detached:
+            raise TypeError("This is raised intentionally to test behavior of "
+                            "submodules with detached HEAD")
+        elif self._is_initialized:
+            raise InvalidGitRepositoryError("This is raised intentionally to "
+                                            "test behavior of submodules that "
+                                            "haven't been initialized")
+        return MockRepo(self._full_path)
