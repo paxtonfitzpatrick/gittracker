@@ -2,21 +2,21 @@ from collections import namedtuple
 from configparser import ConfigParser
 from pathlib import Path
 from git import InvalidGitRepositoryError
-from .functions import CONVERTERS, add_config
+from .functions import CONVERTERS, add_config, MOCK_OUTPUT_DIR
 
 
 class MockRepo:
     """patch for git.Repo"""
     def __init__(self, repo_path):
         self.repo_path = self._validate_repo(repo_path)
-        self.config = self._load_config()
+        self._config = self._load_config()
 
-        self.untracked_files = self.config.getlist('repo', 'untracked_files')
+        self.untracked_files = self._config.getlist('repo', 'untracked_files')
 
-        self.active_branch = self.MockActiveBranch(self.config['active_branch'])
-        self.head = self.MockHead(self.config['head'])
-        self.index = self.MockIndex(self.config['index'])
-        self.submodules = self._setup_submodules(self.config['submodules'])
+        self.active_branch = self.MockActiveBranch(self._config['active_branch'])
+        self.head = self.MockHead(self._config['head'])
+        self.index = self.MockIndex(self._config['index'])
+        self.submodules = self._setup_submodules(self._config['submodules'])
 
         self._generate_expected_output()
 
