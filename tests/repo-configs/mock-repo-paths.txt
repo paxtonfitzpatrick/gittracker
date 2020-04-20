@@ -1,0 +1,12 @@
+even-clean
+commits-ahead
+commits-behind
+commits-ahead-behind
+non-master-branch
+no-remote
+detached-head
+no-history
+staged-files
+unstaged-files
+untracked-files
+submodules
