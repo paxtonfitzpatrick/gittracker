@@ -1,16 +1,19 @@
 import pytest
 from pathlib import Path
 from shutil import copy2, rmtree
+from .helpers.mock_repo import MockRepo
 
 REPO_CONFIGS_DIR = Path(__file__).resolve().parent.joinpath('repo-configs')
 MOCK_REPOS_DIR = REPO_CONFIGS_DIR.parent.joinpath('mock-repos')
 
 
 @pytest.fixture(scope='session')
-def setup_repository():
+def setup_repository(monkeypatch):
     # ==== SETUP ====
     assert REPO_CONFIGS_DIR.is_dir()
     MOCK_REPOS_DIR.mkdir()
+    # monkeypatch `git.Repo` object at session level
+    monkeypatch.setattr('gittracker.tracker.tracker.Repo', MockRepo)
 
     def _generate_from_config(config_file):
         """dynamically creates mock repo directories as needed"""
