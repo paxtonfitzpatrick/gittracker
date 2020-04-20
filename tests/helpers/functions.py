@@ -3,9 +3,7 @@ from collections import namedtuple
 from pathlib import Path
 from shutil import copy2
 from subprocess import PIPE, run
-
-
-FILES_DIR = Path(__file__).resolve().parents[1].joinpath('files')
+from ..conftest import REPO_CONFIGS_DIR
 
 
 def run_command(cmd):
@@ -19,7 +17,7 @@ def run_command(cmd):
 
 
 def add_config(filename, dest_dir):
-    src = FILES_DIR.joinpath(filename)
+    src = REPO_CONFIGS_DIR.joinpath(filename)
     assert src.is_file()
     assert dest_dir.is_dir()
     copy2(src, dest_dir)
