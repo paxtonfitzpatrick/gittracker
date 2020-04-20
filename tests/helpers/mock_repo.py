@@ -2,7 +2,7 @@ from collections import namedtuple
 from configparser import ConfigParser
 from pathlib import Path
 from git import InvalidGitRepositoryError
-from .functions import CONVERTERS, add_config, MOCK_OUTPUT_DIR
+from .functions import CONVERTERS, add_submodule_config
 
 
 class MockRepo:
@@ -17,12 +17,6 @@ class MockRepo:
         self.head = self.MockHead(self._config['head'])
         self.index = self.MockIndex(self._config['index'])
         self.submodules = self._setup_submodules(self._config['submodules'])
-
-        self._generate_expected_output()
-
-    def _generate_expected_output(self):
-        # TODO: way for submodules to update parent's expected output
-        pass
 
     def _load_config(self):
         config_path = self.repo_path.joinpath(f"{self.repo_path.name}.cfg")
@@ -42,7 +36,7 @@ class MockRepo:
                 # .git dir needed to create MockRepo from submodule
                 sm_abspath.joinpath('.git').mkdir()
                 # copy in submodule's config file
-                add_config(sm_config, sm_abspath)
+                add_submodule_config(sm_config, sm_abspath)
 
             # create MockSubmodule object
             submodules.append(MockSubmodule(sm_path, self.repo_path))
@@ -186,8 +180,9 @@ class MockSubmodule:
         if self._is_detached:
             raise TypeError("This is raised intentionally to test behavior of "
                             "submodules with detached HEAD")
-        elif self._is_initialized:
+        elif not self._is_initialized:
             raise InvalidGitRepositoryError("This is raised intentionally to "
                                             "test behavior of submodules that "
                                             "haven't been initialized")
-        return MockRepo(self._full_path)
+        else:
+            return MockRepo(self._full_path)
