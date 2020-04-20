@@ -1,9 +1,17 @@
+import pickle
 import shlex
 from collections import namedtuple
 from pathlib import Path
 from shutil import copy2
 from subprocess import PIPE, run
-from ..conftest import REPO_CONFIGS_DIR
+
+
+# holds config files (name format: `repo-<repo_name>.cfg`)
+REPO_CONFIGS_DIR = Path(__file__).resolve().parent.joinpath('repo-configs')
+# holds mocked repositories
+MOCK_REPOS_DIR = REPO_CONFIGS_DIR.parent.joinpath('mock-repos')
+# holds data files of expected test output (name format `<repo_name>.p`)
+MOCK_OUTPUT_DIR = REPO_CONFIGS_DIR.parent.joinpath('expected-output')
 
 
 def run_command(cmd):
@@ -21,6 +29,14 @@ def add_config(filename, dest_dir):
     assert src.is_file()
     assert dest_dir.is_dir()
     copy2(src, dest_dir)
+
+
+def matches_expected_output(test_output, repo_name):
+    output_filepath = MOCK_OUTPUT_DIR.joinpath(f"{repo_name}.p")
+    with output_filepath.open('rb') as f:
+        expected_output = pickle.load(f)
+
+    return test_output == expected_output
 
 
 ###########################################
