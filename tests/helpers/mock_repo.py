@@ -18,6 +18,12 @@ class MockRepo:
         self.index = self.MockIndex(self.config['index'])
         self.submodules = self._setup_submodules(self.config['submodules'])
 
+        self._generate_expected_output()
+
+    def _generate_expected_output(self):
+        # TODO: way for submodules to update parent's expected output
+        pass
+
     def _load_config(self):
         config_path = self.repo_path.joinpath(f"{self.repo_path.name}.cfg")
         config = ConfigParser(converters=CONVERTERS)
