@@ -1,6 +1,12 @@
 # just for fun :)
 import random
 
+# NOTE: this module raises some DepreciationWarnings in the CI tests
+# that may eventually be upgraded to SyntaxWarnings or SyntaxErrors in
+# Python 3.9+ (see https://bugs.python.org/issue32912). However, until
+# that happens, the warnings will be non-visible to users since they're
+# raised only when the file is compiled to bytecode, which happens in
+# the background when setup.py runs on install
 LOGOS_ASCII = [
 """
   ____ _ _  _____               _             
