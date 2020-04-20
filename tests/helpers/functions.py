@@ -1,6 +1,7 @@
 import pickle
 import shlex
 from collections import namedtuple
+from configparser import ConfigParser
 from pathlib import Path
 from shutil import copy2
 from subprocess import PIPE, run
@@ -24,19 +25,99 @@ def run_command(cmd):
     return result.returncode, result.stdout, result.stderr
 
 
-def add_config(filename, dest_dir):
-    src = REPO_CONFIGS_DIR.joinpath(filename)
+def add_submodule_config(filename, dest_dir):
+    src = REPO_CONFIGS_DIR.joinpath('submodule-configs', filename)
     assert src.is_file()
     assert dest_dir.is_dir()
-    copy2(src, dest_dir)
+    if not dest_dir.joinpath(filename).is_file():
+        copy2(src, dest_dir)
 
 
-def matches_expected_output(test_output, repo_name):
+def matches_expected_output(test_output, repo_name, verbose=2, include_submodules=False):
+    # TODO: handling output format for multiple nested levels of submodules
     output_filepath = MOCK_OUTPUT_DIR.joinpath(f"{repo_name}.p")
-    with output_filepath.open('rb') as f:
-        expected_output = pickle.load(f)
+    if output_filepath.is_file():
+        with output_filepath.open('rb') as f:
+            expected_output = pickle.load(f)
+    else:
+        expected_output = _create_expected_output(repo_name)
+
+    # expected output reflects highest verbosity level so that we only
+    # have to create one file per mock repository. If testing lower
+    # verbosity level, prune data that wouldn't be there
+    if verbose < 3:
+        expected_output['submodules'] = None
+        for field in (
+                'files_staged',
+                'files_not_staged',
+                'files_untracked',
+                'submodules'
+        ):
+            expected_output[field] = None
+    elif not include_submodules:
+        expected_output['submodules'] = None
 
     return test_output == expected_output
+
+
+def _create_expected_output(repo_name, submodule=False):
+    # submodule arg used for recursive calls to set proper config
+    # directory and avoid output to file
+    if submodule:
+        config_dir = REPO_CONFIGS_DIR.joinpath('submodule-configs')
+    else:
+        config_dir = REPO_CONFIGS_DIR
+
+    config_filepath = config_dir.joinpath(f"{repo_name}.cfg")
+    output_filepath = MOCK_OUTPUT_DIR.joinpath(f"{repo_name}.p")
+    config = ConfigParser(converters=CONVERTERS)
+    with open(config_filepath, 'r') as f:
+        config.read_file(f)
+
+    # some upfront checks for conditions that will return a string
+    # rather than a dict
+    if config.getboolean('head', '_is_empty'):
+        if submodule:
+            expected = "not initialized"
+        else:
+            expected = "This should raise a ValueError"
+    elif config.getboolean('head', 'is_detached'):
+        hexsha = config.get('head', 'hexsha')
+        expected = f"HEAD detached at {hexsha[:7]}"
+    else:
+        expected = dict()
+        expected['local_branch'] = config.get('active_branch', 'name')
+        expected['remote_branch'] = config.get('active_branch', 'remote_branch')
+        expected['n_commits_ahead'] = config.getint('active_branch',
+                                                    'n_commits_ahead')
+        expected['n_commits_behind'] = config.getint('active_branch',
+                                                     'n_commits_behind')
+        files_staged = config.getdifflist('index', 'staged_changes')
+        files_unstaged = config.getdifflist('index', 'staged_changes')
+        expected['files_untracked'] = config.getlist('repo', 'untracked_files')
+        expected['n_untracked'] = len(expected['files_untracked'])
+        expected['files_staged'] = [(f.change_type, f.a_path, f.b_path)
+                                    for f in files_staged]
+        expected['n_staged'] = len(files_staged)
+        expected['files_unstaged'] = [(f.change_type, f.a_path, f.b_path)
+                                    for f in files_unstaged]
+        expected['n_unstaged'] = len(files_unstaged)
+
+        submodules = config.getdict('submodules', 'paths_configs')
+        if not any(submodules):
+            expected['submodules'] = None
+        else:
+            expected['submodules'] = {}
+
+        for path, config_file in submodules.items():
+            expected['submodules'][path] = _create_expected_output(config_file,
+                                                                   submodule=True)
+
+    if not submodule:
+        with open(output_filepath, 'rb') as f:
+            pickle.dump(expected, f)
+
+    return expected
 
 
 ###########################################
@@ -71,7 +152,7 @@ def _get_diff_list(val):
     NOTE: the resultant field names of the namedtuple correspond to the
     comma-separated values IN ORDER
     """
-    Diff = namedtuple('Diff', ('a_name', 'b_name', 'change_type'))
+    Diff = namedtuple('Diff', ('change_type', 'a_path', 'b_path'))
     return [Diff(*change.split(', ')) for change in val.splitlines()[1:]]
 
 
