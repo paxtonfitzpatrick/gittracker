@@ -29,15 +29,16 @@ class MockRepo:
         submodules_dict = submodules_config.getdict('paths_configs')
         submodules = []
         for sm_path, sm_config in submodules_dict.items():
-            # get the absolute path for the submodule directory
-            full_path = self.repo_path.joinpath(sm_path)
-            # create the new directory and any parents
-            full_path.mkdir(parents=True)
-            # add a .git directory (needed for creating MockRepo from submodule)
-            full_path.joinpath('.git').mkdir()
-            # copy in the submodule's config file
-            add_config(sm_config, full_path)
-            # create a MockSubmodule object
+            sm_abspath = self.repo_path.joinpath(sm_path)
+            # submodule may already have been set up by previous test
+            if not sm_abspath.is_dir():
+                sm_abspath.mkdir(parents=True)
+                # .git dir needed to create MockRepo from submodule
+                sm_abspath.joinpath('.git').mkdir()
+                # copy in submodule's config file
+                add_config(sm_config, sm_abspath)
+
+            # create MockSubmodule object
             submodules.append(MockSubmodule(sm_path, self.repo_path))
         return submodules
 
