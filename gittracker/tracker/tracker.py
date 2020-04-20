@@ -109,7 +109,7 @@ def _single_repo_status(repo, verbose, follow_submodules):
         n_ahead = None
         n_behind = None
 
-    staged = repo.index.diff(headcommit)
+    staged = headcommit.diff()
     unstaged = repo.index.diff(None)
     untracked = repo.untracked_files
     status['local_branch'] = local_branch_name
@@ -120,6 +120,10 @@ def _single_repo_status(repo, verbose, follow_submodules):
     status['n_not_staged'] = len(unstaged)
     status['n_untracked'] = len(untracked)
 
+    # computing individual file diff info in all cases would make both
+    # Displayer format methods and unit tests simpler, but skipping it
+    # when unnecessary saves a decent amount of time when many
+    # repositories are tracked
     if verbose == 3:
         # go through any staged changes manually to handle renames
         files_staged = []
