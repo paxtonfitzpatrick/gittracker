@@ -30,7 +30,7 @@ def mock_repo():
         """dynamically creates mock repo directories as needed"""
         config_path = REPO_CONFIGS_DIR.joinpath(config_file)
         assert config_path.is_file()
-        repo_path = MOCK_REPOS_DIR.joinpath(config_file.stem[5:])
+        repo_path = MOCK_REPOS_DIR.joinpath(config_file)
         # repo/data file may have already been created for previous test
         if not repo_path.is_dir():
             # create directory, add .git directory and config file
