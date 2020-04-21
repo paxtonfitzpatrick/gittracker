@@ -19,7 +19,7 @@ def mock_repo(monkeypatch):
     MOCK_REPOS_DIR.mkdir()
     MOCK_OUTPUT_DIR.mkdir()
     # monkeypatch `git.Repo` object at session level
-    monkeypatch.setattr('gittracker.tracker.tracker.Repo', MockRepo)
+    # monkeypatch.setattr('gittracker.tracker.tracker.Repo', MockRepo)
 
     def _setup_repo(config_file):
         """dynamically creates mock repo directories as needed"""
@@ -36,7 +36,9 @@ def mock_repo(monkeypatch):
         return [repo_path]
 
     # yield function to tests as fixture
-    yield _setup_repo
+    with monkeypatch.context() as m:
+        m.setattr('gittracker.tracker.tracker.Repo', MockRepo)
+        yield _setup_repo
 
     # ==== TEARDOWN ====
     rmtree(MOCK_REPOS_DIR)
