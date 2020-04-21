@@ -2,8 +2,7 @@ import pytest
 from os.path import splitext
 from shutil import copy2, rmtree
 from .helpers.mock_repo import MockRepo
-# have to import MockRepo from helpers subpackage, and some helper funcs
-# use these paths, so paths must be defined in functions file to avoid
+# global path variables have to be in helpers subpackage to avoid
 # circular import
 from .helpers.functions import (
     MOCK_OUTPUT_DIR,
@@ -14,6 +13,7 @@ from .helpers.functions import (
 
 @pytest.fixture(autouse=True)
 def patch_repo(monkeypatch):
+    # monkeypatch `git.Repo` object at session level
     monkeypatch.setattr('gittracker.tracker.tracker.Repo', MockRepo)
 
 
@@ -23,8 +23,6 @@ def mock_repo():
     assert REPO_CONFIGS_DIR.is_dir()
     MOCK_REPOS_DIR.mkdir()
     MOCK_OUTPUT_DIR.mkdir()
-    # monkeypatch `git.Repo` object at session level
-    # monkeypatch.setattr('gittracker.tracker.tracker.Repo', MockRepo)
 
     def _setup_repo(config_file):
         """dynamically creates mock repo directories as needed"""
@@ -45,7 +43,3 @@ def mock_repo():
     # ==== TEARDOWN ====
     rmtree(MOCK_REPOS_DIR)
     rmtree(MOCK_OUTPUT_DIR)
-
-
-# with monkeypatch.context() as m:
-#     m.setattr('gittracker.tracker.tracker.Repo', MockRepo)
