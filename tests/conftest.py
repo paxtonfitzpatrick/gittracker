@@ -12,8 +12,13 @@ from .helpers.functions import (
 )
 
 
+@pytest.fixture(autouse=True)
+def patch_repo(monkeypatch):
+    monkeypatch.setattr('gittracker.tracker.tracker.Repo', MockRepo)
+
+
 @pytest.fixture(scope='session')
-def mock_repo(monkeypatch):
+def mock_repo():
     # ==== SETUP ====
     assert REPO_CONFIGS_DIR.is_dir()
     MOCK_REPOS_DIR.mkdir()
@@ -33,9 +38,7 @@ def mock_repo(monkeypatch):
             repo_path.joinpath('.git').mkdir()
             copy2(config_path, repo_path)
         # return as one-item list for use in `get_status` function
-        with monkeypatch.context() as m:
-            m.setattr('gittracker.tracker.tracker.Repo', MockRepo)
-            return [repo_path]
+        return [repo_path]
 
     # yield function to tests as fixture
     yield _setup_repo
@@ -43,3 +46,7 @@ def mock_repo(monkeypatch):
     # ==== TEARDOWN ====
     rmtree(MOCK_REPOS_DIR)
     rmtree(MOCK_OUTPUT_DIR)
+
+
+# with monkeypatch.context() as m:
+#     m.setattr('gittracker.tracker.tracker.Repo', MockRepo)
