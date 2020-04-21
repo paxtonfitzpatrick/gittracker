@@ -114,7 +114,7 @@ def _create_expected_output(repo_name, submodule=False):
                                                                    submodule=True)
 
     if not submodule:
-        with open(output_filepath, 'rb') as f:
+        with open(output_filepath, 'wb') as f:
             pickle.dump(expected, f)
 
     return expected
