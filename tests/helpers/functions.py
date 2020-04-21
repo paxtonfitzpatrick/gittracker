@@ -33,7 +33,7 @@ def add_submodule_config(filename, dest_dir):
         copy2(src, dest_dir)
 
 
-def matches_expected_output(test_output, repo_name, verbose=2, include_submodules=False):
+def matches_expected_output(repo_name, test_output, verbose=2, include_submodules=False):
     # TODO: handling output format for multiple nested levels of submodules
     output_filepath = MOCK_OUTPUT_DIR.joinpath(f"{repo_name}.p")
     if output_filepath.is_file():
@@ -134,13 +134,13 @@ def _get_multiline_list(val):
 
 def _get_dict(val):
     """
-    splits a newline separated list of values for a single option
-    (where each option takes the format `sub-option = sub-value`) into a
+    splits a newline separated list of values for a single option (where
+    each option takes the format `sub-option = sub-value`) into a
     dictionary with the format `{sub-option: sub-value}`
     NOTE: first item should be on a different line from the option key
     """
-    keys_vals = val.splitlines()[1:]
-    return {k: v for k, v in map(lambda x: x.split(' = '), keys_vals)}
+    keys_vals = map(lambda x: x.split('::'), val.splitlines()[1:])
+    return {k.strip(): v.strip() for k, v in keys_vals}
 
 
 def _get_diff_list(val):
@@ -153,7 +153,8 @@ def _get_diff_list(val):
     comma-separated values IN ORDER
     """
     Diff = namedtuple('Diff', ('change_type', 'a_path', 'b_path'))
-    return [Diff(*change.split(', ')) for change in val.splitlines()[1:]]
+    lines = val.splitlines()[1:]
+    return [Diff(*map(lambda x: x.strip(), line.split('::'))) for line in lines]
 
 
 CONVERTERS = {

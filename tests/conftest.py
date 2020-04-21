@@ -32,8 +32,7 @@ def mock_repo(monkeypatch):
             repo_path.mkdir()
             repo_path.joinpath('.git').mkdir()
             copy2(config_path, repo_path)
-        # return as one-item list so tests can use outer `get_status`
-        # function instead of `_single_repo_status`
+        # return as one-item list for use in `get_status` function
         return [repo_path]
 
     # yield function to tests as fixture
