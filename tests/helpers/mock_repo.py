@@ -12,11 +12,12 @@ class MockRepo:
         self._config = self._load_config()
 
         self.untracked_files = self._config.getlist('repo', 'untracked_files')
-        self.staged_changes = self._config.getdifflist('repo', 'staged_changes')
         self.unstaged_changes = self._config.getdifflist('repo', 'unstaged_changes')
 
+        self._staged_changes = self._config.getdifflist('repo', 'staged_changes')
+
+        self.head = self.MockHead(self._config['head'], self._staged_changes)
         self.active_branch = self.MockActiveBranch(self._config['active_branch'])
-        self.head = self.MockHead(self._config['head'])
         self.submodules = self._setup_submodules(self._config['submodules'])
 
     def _load_config(self):
@@ -124,8 +125,9 @@ class MockRepo:
         patch for git.refs.HEAD (note this is different from
         git.refs.Head, which is patched by the MockActiveBranch class)
         """
-        def __init__(self, head_config):
+        def __init__(self, head_config, staged_changes):
             self.is_detached = head_config.getboolean('is_detached')
+            self._staged_changes = staged_changes
             self._is_empty = head_config.getboolean('_is_empty')
             self._hexsha = head_config.get('hexsha')
 
@@ -140,8 +142,16 @@ class MockRepo:
             if self._is_empty:
                 raise ValueError("This is raised intentionally to test "
                                  "behavior with empty repositories")
-            HeadCommit = namedtuple('HeadCommit', 'hexsha')
-            return HeadCommit(hexsha=self._hexsha)
+
+            def _get_staged_changes():
+                """in turn, a patch for `git.objects.Commit`'s `diff` method"""
+                return self._staged_changes
+
+            HeadCommit = namedtuple('HeadCommit', ('hexsha', 'diff'))
+            return HeadCommit(hexsha=self._hexsha, diff=_get_staged_changes)
+
+        def diff(self):
+            return self.
 
 
 class MockSubmodule:
