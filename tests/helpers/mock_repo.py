@@ -150,9 +150,6 @@ class MockRepo:
             HeadCommit = namedtuple('HeadCommit', ('hexsha', 'diff'))
             return HeadCommit(hexsha=self._hexsha, diff=_get_staged_changes)
 
-        def diff(self):
-            return self.
-
 
 class MockSubmodule:
     """
