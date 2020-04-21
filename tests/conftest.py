@@ -1,5 +1,5 @@
 import pytest
-from pathlib import Path
+from os.path import splitext
 from shutil import copy2, rmtree
 from .helpers.mock_repo import MockRepo
 # have to import MockRepo from helpers subpackage, and some helper funcs
@@ -30,7 +30,7 @@ def mock_repo():
         """dynamically creates mock repo directories as needed"""
         config_path = REPO_CONFIGS_DIR.joinpath(config_file)
         assert config_path.is_file()
-        repo_path = MOCK_REPOS_DIR.joinpath(config_file)
+        repo_path = MOCK_REPOS_DIR.joinpath(splitext(config_file)[0])
         # repo/data file may have already been created for previous test
         if not repo_path.is_dir():
             # create directory, add .git directory and config file
