@@ -33,12 +33,12 @@ def mock_repo(monkeypatch):
             repo_path.joinpath('.git').mkdir()
             copy2(config_path, repo_path)
         # return as one-item list for use in `get_status` function
-        return [repo_path]
+        with monkeypatch.context() as m:
+            m.setattr('gittracker.tracker.tracker.Repo', MockRepo)
+            return [repo_path]
 
     # yield function to tests as fixture
-    with monkeypatch.context() as m:
-        m.setattr('gittracker.tracker.tracker.Repo', MockRepo)
-        yield _setup_repo
+    yield _setup_repo
 
     # ==== TEARDOWN ====
     rmtree(MOCK_REPOS_DIR)
