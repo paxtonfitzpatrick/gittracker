@@ -93,8 +93,12 @@ class MockRepo:
         def __init__(self, branch_config):
             self.name = branch_config.get('name')
             self.remote_branch = branch_config.get('remote_branch')
-            self.n_commits_ahead = branch_config.getint('n_commits_ahead')
-            self.n_commits_behind = branch_config.getint('n_commits_behind')
+            if self.remote_branch == '':
+                self.n_commits_ahead = "THIS SHOULD NOT APPEAR IN OUTPUT"
+                self.n_commits_behind = "THIS SHOULD NOT APPEAR IN OUTPUT"
+            else:
+                self.n_commits_ahead = branch_config.getint('n_commits_ahead')
+                self.n_commits_behind = branch_config.getint('n_commits_behind')
 
         def _compare_to_remote(self, local_remote_str):
             """see MockRepo.iter_commits()"""
@@ -117,6 +121,9 @@ class MockRepo:
             returned object, it's simpler to just mock it with a
             namedtuple than an entire extra internal class
             """
+            if self.remote_branch == '':
+                raise AttributeError("Raised intentionally to test behavior "
+                                     "with local branches not tracking a remote")
             RemoteBranch = namedtuple('RemoteBranch', 'name')
             return RemoteBranch(name=self.remote_branch)
 
@@ -140,8 +147,8 @@ class MockRepo:
             than a whole separate class
             """
             if self._is_empty:
-                raise ValueError("This is raised intentionally to test "
-                                 "behavior with empty repositories")
+                raise ValueError("Raised intentionally to test behavior "
+                                 "with empty repositories")
 
             def _get_staged_changes():
                 """in turn, a patch for `git.objects.Commit`'s `diff` method"""
@@ -178,11 +185,11 @@ class MockSubmodule:
 
     def module(self):
         if self._is_detached:
-            raise TypeError("This is raised intentionally to test behavior of "
+            raise TypeError("Raised intentionally to test behavior of "
                             "submodules with detached HEAD")
         elif not self._is_initialized:
-            raise InvalidGitRepositoryError("This is raised intentionally to "
-                                            "test behavior of submodules that "
+            raise InvalidGitRepositoryError("Raised intentionally to test "
+                                            "behavior of submodules that "
                                             "haven't been initialized")
         else:
             return MockRepo(self._full_path)

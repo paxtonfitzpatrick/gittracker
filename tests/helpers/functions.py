@@ -88,10 +88,14 @@ def _create_expected_output(repo_name, submodule=False):
         expected = dict()
         expected['local_branch'] = config.get('active_branch', 'name')
         expected['remote_branch'] = config.get('active_branch', 'remote_branch')
-        expected['n_commits_ahead'] = config.getint('active_branch',
-                                                    'n_commits_ahead')
-        expected['n_commits_behind'] = config.getint('active_branch',
-                                                     'n_commits_behind')
+        if expected['remote_branch'] == '':
+            expected['n_commits_ahead'] = None
+            expected['n_commits_behind'] = None
+        else:
+            expected['n_commits_ahead'] = config.getint('active_branch',
+                                                        'n_commits_ahead')
+            expected['n_commits_behind'] = config.getint('active_branch',
+                                                         'n_commits_behind')
         files_staged = config.getdifflist('repo', 'staged_changes')
         files_unstaged = config.getdifflist('repo', 'unstaged_changes')
         expected['files_untracked'] = config.getlist('repo', 'untracked_files')
