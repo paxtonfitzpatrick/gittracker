@@ -99,7 +99,7 @@ def _create_expected_output(repo_name, submodule=False):
         expected['files_staged'] = [(f.change_type, f.a_path, f.b_path)
                                     for f in files_staged]
         expected['n_staged'] = len(files_staged)
-        expected['files_not_ staged'] = [(f.change_type, f.a_path, f.b_path)
+        expected['files_not_staged'] = [(f.change_type, f.a_path, f.b_path)
                                     for f in files_unstaged]
         expected['n_not_staged'] = len(files_unstaged)
 
