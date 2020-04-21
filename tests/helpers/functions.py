@@ -145,10 +145,11 @@ def _get_dict(val):
 
 def _get_diff_list(val):
     """
-    specifcally for use in the MockIndex class; splits a
-    newline-separated list of values for a single option (where each
-    value is comma-separated list with length 3) into a list of
-    namedtuple types.
+    splits a newline-separated list of ::-separated values for a single
+    option (where each value is 3-item, ::-separated list) into a list of
+    namedtuple types. Patched `.diff` method returns a list of git.Diff
+    objects, but we only need to access 3 of their properties, so mocking
+    them with namedtuples is a lot easier than adding a whole class
     NOTE: the resultant field names of the namedtuple correspond to the
     comma-separated values IN ORDER
     """

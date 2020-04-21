@@ -12,6 +12,8 @@ class MockRepo:
         self._config = self._load_config()
 
         self.untracked_files = self._config.getlist('repo', 'untracked_files')
+        self.staged_changes = self._config.getdifflist('repo', 'staged_changes')
+        self.unstaged_changes = self._config.getdifflist('repo', 'unstaged_changes')
 
         self.active_branch = self.MockActiveBranch(self._config['active_branch'])
         self.head = self.MockHead(self._config['head'])
@@ -58,6 +60,23 @@ class MockRepo:
         # necessary to pass some checks in main module
         assert repo_path.joinpath('.git').is_dir()
         return repo_path
+
+    @property
+    def index(self):
+        """
+        patch for git.index.IndexFile
+        """
+        def _get_staged_changes(none_arg):
+            """
+            in turn, a patch for the `git.index.IndexFile.diff(None)` method
+            """
+            # assertion test for my ability to remmeber to update this
+            # when I inevitably start using this method for something else
+            assert none_arg is None
+            return self.unstaged_changes
+
+        Index = namedtuple('index', 'diff')
+        return Index(diff=_get_staged_changes)
 
     def iter_commits(self, comparison_str):
         """
@@ -124,31 +143,6 @@ class MockRepo:
                                  "behavior with empty repositories")
             HeadCommit = namedtuple('HeadCommit', 'hexsha')
             return HeadCommit(hexsha=self._hexsha)
-
-    class MockIndex:
-        """patch for git.index.IndexFile"""
-        def __init__(self, index_config):
-            self.staged_changes = index_config.getdifflist('staged_changes')
-            self.unstaged_changes = index_config.getdifflist('unstaged_changes')
-
-        def diff(self, other):
-            """
-            patched method returns a list of git.Diff objects, but
-            similar to above, we only need to access 3 of their
-            properties, so mocking them with namedtuples (via the custom
-            `getdifflist` converter) is preferable to adding yet another
-            nested class
-            """
-            if other is None:
-                # passing None to git.index.IndexFile.diff() returns
-                # diffs for tracked-but-not-staged files
-                return self.unstaged_changes
-            else:
-                # quick spot check to make sure this is a HeadCommit
-                # object (a bit hacky, but can't use `isinstance` on
-                # types locally defined in different namespace)
-                assert type(other).__name__ == 'HeadCommit'
-                return self.staged_changes
 
 
 class MockSubmodule:
