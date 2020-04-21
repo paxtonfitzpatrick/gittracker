@@ -45,7 +45,7 @@ def matches_expected_output(test_output, repo_name, verbose=2, include_submodule
     # expected output reflects highest verbosity level so that we only
     # have to create one file per mock repository. If testing lower
     # verbosity level, prune data that wouldn't be there
-    if verbose < 3:
+    if verbose != 3:
         expected_output['submodules'] = None
         for field in (
                 'files_staged',
@@ -93,7 +93,7 @@ def _create_expected_output(repo_name, submodule=False):
         expected['n_commits_behind'] = config.getint('active_branch',
                                                      'n_commits_behind')
         files_staged = config.getdifflist('index', 'staged_changes')
-        files_unstaged = config.getdifflist('index', 'staged_changes')
+        files_unstaged = config.getdifflist('index', 'unstaged_changes')
         expected['files_untracked'] = config.getlist('repo', 'untracked_files')
         expected['n_untracked'] = len(expected['files_untracked'])
         expected['files_staged'] = [(f.change_type, f.a_path, f.b_path)
