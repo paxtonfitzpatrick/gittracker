@@ -17,7 +17,6 @@ class MockRepo:
 
         self.active_branch = self.MockActiveBranch(self._config['active_branch'])
         self.head = self.MockHead(self._config['head'])
-        self.index = self.MockIndex(self._config['index'])
         self.submodules = self._setup_submodules(self._config['submodules'])
 
     def _load_config(self):
