@@ -45,17 +45,18 @@ def matches_expected_output(repo_name, test_output, verbose=2, include_submodule
     # expected output reflects highest verbosity level so that we only
     # have to create one file per mock repository. If testing lower
     # verbosity level, prune data that wouldn't be there
-    if verbose != 3:
-        expected_output['submodules'] = None
-        for field in (
-                'files_staged',
-                'files_not_staged',
-                'files_untracked',
-                'submodules'
-        ):
-            expected_output[field] = None
-    elif not include_submodules:
-        expected_output['submodules'] = None
+    if isinstance(expected_output, dict):
+        if verbose != 3:
+            expected_output['submodules'] = None
+            for field in (
+                    'files_staged',
+                    'files_not_staged',
+                    'files_untracked',
+                    'submodules'
+            ):
+                expected_output[field] = None
+        elif not include_submodules:
+            expected_output['submodules'] = None
 
     return test_output == expected_output
 
