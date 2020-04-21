@@ -11,13 +11,17 @@ class MockRepo:
         self.repo_path = self._validate_repo(repo_path)
         self._config = self._load_config()
 
-        self.untracked_files = self._config.getlist('repo', 'untracked_files')
-        self.unstaged_changes = self._config.getdifflist('repo', 'unstaged_changes')
-
         self._staged_changes = self._config.getdifflist('repo', 'staged_changes')
-
+        self.unstaged_changes = self._config.getdifflist('repo', 'unstaged_changes')
+        self.untracked_files = self._config.getlist('repo', 'untracked_files')
         self.head = self.MockHead(self._config['head'], self._staged_changes)
-        self.active_branch = self.MockActiveBranch(self._config['active_branch'])
+        # if HEAD is detached, we want to fail if trying to access
+        # `repo.active_branch`, and also avoid creating a MockActiveBranch
+        # without the necessary values in the config
+        if self.head.is_detached:
+            self.active_branch = self._failcase_active_branch
+        else:
+            self.active_branch = self.MockActiveBranch(self._config['active_branch'])
         self.submodules = self._setup_submodules(self._config['submodules'])
 
     def _load_config(self):
@@ -60,6 +64,16 @@ class MockRepo:
         # necessary to pass some checks in main module
         assert repo_path.joinpath('.git').is_dir()
         return repo_path
+
+    @property
+    def _failcase_active_branch(self):
+        """
+        This happens if we try to reference the repo's `active_branch`
+        attr from a detached HEAD state. TypeError is used to mirror the
+        exception type raised by GitPython under the same circumstance.
+        """
+        raise TypeError("Tried to access the `active_branch` peoperty of a repo "
+                        "with HEAD detached")
 
     @property
     def index(self):
