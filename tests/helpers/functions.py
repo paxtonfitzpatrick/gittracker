@@ -92,8 +92,8 @@ def _create_expected_output(repo_name, submodule=False):
                                                     'n_commits_ahead')
         expected['n_commits_behind'] = config.getint('active_branch',
                                                      'n_commits_behind')
-        files_staged = config.getdifflist('index', 'staged_changes')
-        files_unstaged = config.getdifflist('index', 'unstaged_changes')
+        files_staged = config.getdifflist('repo', 'staged_changes')
+        files_unstaged = config.getdifflist('repo', 'unstaged_changes')
         expected['files_untracked'] = config.getlist('repo', 'untracked_files')
         expected['n_untracked'] = len(expected['files_untracked'])
         expected['files_staged'] = [(f.change_type, f.a_path, f.b_path)
