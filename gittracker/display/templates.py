@@ -49,7 +49,7 @@ ${repo_name}
 # fills `branch_info` fields for SINGLE_REPO_COMPLEX in normal case
 BRANCH_INFO_STANDARD = Template(
 """\
-on branch: ${local_branch} ${compared_to_remote} ${remote_branch}
+on branch ${local_branch} ${vs_remote} ${remote_branch}
 """
 )
 
@@ -95,15 +95,6 @@ SINGLE_SUBMODULE = Template(
 \t${submodule_path}: ${submodule_info}\
 """
 )
-
-
-# mapping of single repository templates by verbosity value
-# REPO_TEMPLATES = {
-#     1: SINGLE_REPO_V1,
-#     2: SINGLE_REPO_V2,
-#     3: SINGLE_REPO_V3
-# }
-
 
 
 # numeric codes from ANSI escape sequences for text color/formatting

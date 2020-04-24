@@ -150,7 +150,7 @@ def _single_repo_status(repo, verbose, follow_submodules):
         status['files_staged'] = files_staged
         status['files_untracked'] = untracked
         status['files_not_staged'] = [
-            (diff.change_type, diff.a_path) for diff in unstaged
+            (diff.change_type, diff.a_path, None) for diff in unstaged
         ]
 
     if follow_submodules > 0 and any(repo.submodules):
