@@ -1,7 +1,8 @@
 from string import Template
 
 
-# Wrapper template for full output. Applies to all verbosity levels
+# Wrapper template for full output; applied at all verbosity levels:
+#   -
 # =======================================================================
 OUTER_TEMPLATE = Template(
 """\
@@ -15,8 +16,8 @@ ${repos_status}\
 
 # Single-repository template: verbosity level 1
 # =======================================================================
-#   only information shown is the repository's name.  The name is
-#   colored green if:
+# Only information shown is the repository's name. The name appears in
+# green if 3 conditions are (all) met:
 #       1) the working tree is clean
 #       2) the active branch is not detached, AND
 #       3) the active branch is either up to date with its remote
@@ -47,6 +48,11 @@ ${repo_name}
 
 # =========================SUB-TEMPLATES=================================
 # fills `branch_info` fields for SINGLE_REPO_COMPLEX in normal case
+#   - local_branch: the current local branch
+#   - vs_remote: string comparing the local branch to its remote tracking
+#     branch (if it has one)
+#   - remote_branch: the current local branch's remote tracking branch
+#     (if it has one)
 BRANCH_INFO_STANDARD = Template(
 """\
 on branch ${local_branch} ${vs_remote} ${remote_branch}
@@ -55,6 +61,15 @@ on branch ${local_branch} ${vs_remote} ${remote_branch}
 
 
 # fills `branch_info` fields for SINGLE_REPO_COMPLEX if HEAD is detached
+#   - detached_at: takes the form "HEAD detached at <curr_sha>" where
+#     <curr_sha> is the *current* commit hash of the detached HEAD
+#   - from_branch: the local branch from which the HEAD was detached. If
+#     commits have been made on the detached HEAD, the format will be
+#     "<local_branch>@<ref_sha>" where <ref_sha> is the commit hash where
+#     HEAD was detached from <local_branch> (i.e., the last commit they
+#     have in common)
+#   - new_commits: if commits have been made on the detached HEAD, takes
+#     the format "<n_commits> new commits since detached"
 BRANCH_INFO_DETACHED = Template(
 """\
 ${detached_at} (from branch: ${from_branch}) ${new_commits}\
@@ -71,9 +86,9 @@ LOCAL_CHANGES_V2 = Template("${n_uncommitted} uncommitted changes")
 # Describes a single "state" of a locally changed file (staged,
 # tracked-but-not-staged, untracked); one or multiple instances fill
 # `local_changes` field at verbosity level 3 (if any local changes):
-#   - `n_changed`: the number of files in the given state
-#   - `change_state_msg`: a descriptor for the given state
-#   - `changed_files`: filled by instances of `SINGLE_FILE_CHANGE`
+#   - n_changed: the number of files in the given state
+#   - change_state_msg: a descriptor for the given state
+#   - changed_files: filled by instances of `SINGLE_FILE_CHANGE` templates
 SINGLE_CHANGE_STATE = Template(
 """\
 ${n_changed} ${change_state_msg}:
@@ -84,12 +99,20 @@ ${n_changed} ${change_state_msg}:
 
 # Describes change to a single file; instances fill the `changed_files`
 # field of SINGLE_CHANGE_STATE template at verbosity level 3:
-#   - `change_type`: "modified", "deleted", etc. as shown by Git
+#   - change_type: "modified", "deleted", etc. as shown by Git
+#   - filepath: path to the changed file (from the repository root)
 SINGLE_FILE_CHANGE = Template("${change_type}:   ${filepath}")
 
 
-# format skeleton for submodules
-# (analogous to SINGLE_REPO_V2 template; only used with SINGLE_REPO_V3)
+# Describes change to a single submodule from a repository; only used at
+# verbosity level 3 if --submodules flag is passed:
+#   - submodule_path: path to the submodule (from the repository root)
+#   - submodule_info: simple string describing status of submodule.
+#     As applicable, one of:
+#       + "working tree is clean"
+#       + "working tree is dirty"
+#       + "HEAD detached at <sha> where <sha> is current commit hash
+#       + "not initialized" if the submodule has not been initialized
 SINGLE_SUBMODULE = Template(
 """\
 \t${submodule_path}: ${submodule_info}\
