@@ -1,15 +1,16 @@
 from os.path import basename
 from shutil import get_terminal_size
 from .ascii import RANDOM_LOGO
-from .templates import (
-    ANSI_SEQS,
-    OUTER_TEMPLATE,
-    REPO_TEMPLATES,
-    SINGLE_CHANGE_STATE,
-    SINGLE_FILE_CHANGE,
-    SINGLE_REPO_DETACHED,
-    SINGLE_SUBMODULE
-)
+from .templates import (ANSI_SEQS,
+                        OUTER_TEMPLATE,
+                        SINGLE_REPO_SIMPLE,
+                        SINGLE_REPO_COMPLEX,
+                        BRANCH_INFO_STANDARD,
+                        BRANCH_INFO_DETACHED,
+                        LOCAL_CHANGES_V2,
+                        SINGLE_CHANGE_STATE,
+                        SINGLE_FILE_CHANGE,
+                        SINGLE_SUBMODULE)
 from ..utils.utils import clear_display
 
 
@@ -37,84 +38,68 @@ class Displayer:
         self.verbose = verbose
         self.outfile = outfile
         self.plain = plain
-        self.n_repos = len(self.repos)
         self.outer_template = OUTER_TEMPLATE
-        self.repo_template = REPO_TEMPLATES[self.verbose]
-        self.ansi_seqs = ANSI_SEQS
         self.logo = RANDOM_LOGO
 
         if self.verbose == 1:
-            self.repo_format_func = self._format_v1
-        elif self.verbose == 2:
-            self.repo_format_func = self._format_v2
+            self.repo_template = SINGLE_REPO_SIMPLE
+            self.repo_format_func = self._format_simple
         else:
-            self.repo_format_func = self._format_v3
+            self.repo_template = SINGLE_REPO_COMPLEX
+            self.repo_format_func = self._format_complex
 
-        # completed outer template to display
+        # holds completed outer template to display
         self.full_template = None
-        # stores list of filled single-repo templates
-        self.full_repo_templates = None
-        # stores filled `SINGLE_CHANGE_STATE` templates if self.verbose == 3
-        self.full_state_templates = None
-        # stores filled `SINGLE_FILE_CHANGE` templates if self.verbose == 3
-        self.full_file_templates = None
+        # skip formatting if plain style was requested or writing to file
+        self._dont_apply_style = self.plain or self.outfile is not None
 
     @property
     def display_width(self):
         return get_terminal_size().columns
 
-    def format_display(self):
+    def format_status_display(self):
         # fill individual repo templates
-        full_repo_templates, n_good, n_bad = self.repo_format_func()
-        n_total = n_good + n_bad
-        n_total_fmt = self.format_value_text(
-            value=n_total,
-            style='bold'
-        )
-        # handle two (probably rare) cases
-        if n_bad == 0:
-            # if no repos have unpushed changes, report them as "all" up-to-date
-            # and color the full message green
+        filled_repo_templates = []
+        n_clean = 0
+        for repo in self.repos.items():
+            filled_repo_template, is_clean = self.repo_format_func(repo)
+            filled_repo_templates.append(filled_repo_template)
+            if is_clean:
+                n_clean += 1
+
+        n_total_fmt = self.apply_style(len(filled_repo_templates), 'bold')
+        if n_clean == len(filled_repo_templates):
+            # no repos have unpushed or uncommitted changes
             summary_msg = "all up-to-date"
-            summary_msg_fmt = self.format_value_text(
-                value=summary_msg,
-                style='green'
-            )
-        elif n_good == 0:
-            # or, if all repos have unpushed changes, report them as "all"
-            # having unpushed changes and color the full message red
+            summary_msg_fmt = self.apply_style(summary_msg, 'green')
+        elif n_clean == 0:
+            # all repos have unpushed and/or uncommitted changes
             summary_msg = "all with changes"
-            summary_msg_fmt = self.format_value_text(
-                value=summary_msg,
-                style='red'
-            )
-        # standard case: if there's a mix, don't color the whole message, and
-        # color the good/bad counts separately
+            summary_msg_fmt = self.apply_style(summary_msg, 'red')
         else:
-            n_good_fmt = self.format_value_text(
-                value=n_good,
-                style=('bold', 'green')
-            )
-            n_bad_fmt = self.format_value_text(
-                value=n_bad,
-                style=('bold', 'red')
-            )
-            summary_msg_fmt = f"{n_good_fmt} up-to-date, {n_bad_fmt} with changes"
+            # standard case (mix of repos with & without changes):
+            # color "good"/"bad" counts separately
+            n_dirty = len(filled_repo_templates) - n_clean
+            n_clean_fmt = self.apply_style(n_clean, ('bold', 'green'))
+            n_dirty_fmt = self.apply_style(n_dirty, ('bold', 'red'))
+            summary_msg_fmt = f"{n_clean_fmt} up-to-date, {n_dirty_fmt} with changes"
+
         # mapping for self.outer_template
         template_mapping = {
-            'pkg_ascii_logo': self.logo,
+            'ascii_logo': self.logo,
             'n_repos_tracked': n_total_fmt,
             'summary_msg': summary_msg_fmt,
             'line_sep': '=' * self.display_width,
-            'repos_status': '\n'.join(full_repo_templates)
+            'repos_status': '\n'.join(filled_repo_templates)
         }
         full_template = self.outer_template.safe_substitute(template_mapping)
+
         # cleans up template formatting for verbosity level 3
         # in cases where repos have no uncommitted changes
         full_template = full_template.replace('    \n', '\n')
         self.full_template = full_template.replace('\n\n\n', '\n\n')
 
-    def format_value_text(self, value, style=None):
+    def apply_style(self, value, style=None):
         """
         Returns a string-formatted value to be inserted into
         a template, surrounded by the ANSI escape sequences
@@ -129,50 +114,73 @@ class Displayer:
                 The string-formatted value, surrounded by
                 ANSI escape sequences
         """
-        if self.outfile is not None or self.plain:
-            # skip formatting if not writing to stdout
-            # or non-stylized output was requested
+        if self._dont_apply_style or style is None:
             return value
 
-        reset_code = "\033[0m"
-        if style is None:
-            ansi_val = 0
-        elif isinstance(style, str):
-            ansi_val = self.ansi_seqs[style]
+        if isinstance(style, str):
+            ansi_val = ANSI_SEQS[style]
         else:
-            ansi_val = ";".join((str(self.ansi_seqs[s]) for s in style))
+            ansi_val = ";".join((str(ANSI_SEQS[s]) for s in style))
 
         style_code = f"\033[{ansi_val}m"
+        reset_code = "\033[0m"
         return f"{style_code}{value}{reset_code}"
 
-    def _format_v1(self):
-        # repo status formatting function called if self.verbose == 1
-        full_repo_templates = []
-        n_good = 0
-        n_bad = 0
-        for repo_path, repo_status in self.repos.items():
-            repo_name = basename(repo_path)
-            if isinstance(repo_status, dict) and not any(
-                repo_status[k] for k in (
-                        'n_commits_ahead',
-                        'n_commits_behind',
-                        'n_staged',
-                        'n_not_staged',
-                        'n_untracked'
-                )
-            ):
-                style = 'green'
-                n_good += 1
-            else:
-                # either there are new changes or HEAD is detached
-                style = 'red'
-                n_bad += 1
+    def _format_simple(self, repo_info):
+        # repo_info is a tuple of (key, value) from self.repos
+        repo_path, status = repo_info
+        repo_name = basename(repo_path)
+        if any(status[k] for k in ('is_detached', 'n_commits_ahead',
+                                   'n_commits_behind', 'n_staged',
+                                   'n_not_staged', 'n_untracked')):
+            is_clean = False
+            style = 'red'
+        else:
+            is_clean = True
+            style = 'green'
+        repo_name_fmt = self.apply_style(repo_name, style=style)
+        template_mapping = {'repo_name': repo_name_fmt}
+        filled_template = self.repo_template.safe_substitute(template_mapping)
+        return filled_template, is_clean
 
-            repo_name_fmt = self.format_value_text(value=repo_name, style=style)
-            template_mapping = {'repo_name': repo_name_fmt}
-            full_repo_template = self.repo_template.safe_substitute(template_mapping)
-            full_repo_templates.append(full_repo_template)
-        return full_repo_templates, n_good, n_bad
+    def _format_complex(self, repo_info):
+        # repo_info is a tuple of (key, value) from self.repos
+        repo_path, status = repo_info
+        repo_name = basename(repo_path)
+        if status['is_detached']:
+            branch_info = self._format_branch_detached(status)
+        else:
+            branch_info = self._format_branch_standard(status)
+
+    def _format_branch_detached(self, repo_status):
+        mapping = dict()
+        sha_msg = f"HEAD detached at {repo_status['hexsha']}"
+        ref_sha = repo_status['ref_sha']
+        n_commits = repo_status['detached_commits']
+
+        if ref_sha is None:
+            from_branch = repo_status['from_branch']
+        else:
+            from_branch = f"{repo_status['from_branch']}@{ref_sha}"
+
+        if n_commits is None:
+            new_commits = ''
+        else:
+            n_commits_fmt = self.apply_style(n_commits, 'red')
+            new_commits = f"{n_commits_fmt} new commits since detached"
+
+        mapping['detached_at'] = self.apply_style(sha_msg, 'red')
+        mapping['from_branch'] = self.apply_style(from_branch, 'bold')
+        mapping['new_commits'] = new_commits
+        full_branch_template = BRANCH_INFO_DETACHED.safe_substitute(mapping)
+        return full_branch_template
+
+
+
+
+
+
+
 
     def _format_v2(self):
         # formatting function if self.verbose == 2
@@ -185,7 +193,7 @@ class Displayer:
             if isinstance(repo_status, str):
                 # HEAD is detached, use alternate template...
                 template = SINGLE_REPO_DETACHED
-                template_mapping['detached_head_msg'] = self.format_value_text(
+                template_mapping['detached_head_msg'] = self.apply_style(
                     value=repo_status,
                     style='red'
                 )
@@ -194,18 +202,18 @@ class Displayer:
             else:
                 # ...otherwise, use standard template and get further info
                 template = self.repo_template
-                template_mapping['local_branch'] = self.format_value_text(
+                template_mapping['local_branch'] = self.apply_style(
                     repo_status['local_branch'],
                     style='bold'
                 )
-                template_mapping['remote_branch'] = self.format_value_text(
+                template_mapping['remote_branch'] = self.apply_style(
                     repo_status['remote_branch'],
                     style='bold'
                 )
                 n_ahead = repo_status['n_commits_ahead']
                 n_behind = repo_status['n_commits_behind']
-                n_ahead_fmt = self.format_value_text(value=n_ahead, style='bold')
-                n_behind_fmt = self.format_value_text(value=n_behind, style='bold')
+                n_ahead_fmt = self.apply_style(value=n_ahead, style='bold')
+                n_behind_fmt = self.apply_style(value=n_behind, style='bold')
 
                 if n_ahead is n_behind is None:
                     # local repository isn't tracking a remote
@@ -248,12 +256,12 @@ class Displayer:
                     name_color = 'red'
                     n_bad += 1
 
-                template_mapping['n_uncommitted'] = self.format_value_text(
+                template_mapping['n_uncommitted'] = self.apply_style(
                     value=n_uncommitted,
                     style=('bold', uncommitted_color)
                 )
 
-            template_mapping['repo_name'] = self.format_value_text(
+            template_mapping['repo_name'] = self.apply_style(
                 value=basename(repo_path),
                 style=('bold', name_color)
             )
@@ -276,7 +284,7 @@ class Displayer:
             if isinstance(repo_status, str):
                 # HEAD is detached, use alternate template...
                 template = SINGLE_REPO_DETACHED
-                template_mapping['detached_head_msg'] = self.format_value_text(
+                template_mapping['detached_head_msg'] = self.apply_style(
                     value=repo_status,
                     style='red'
                 )
@@ -286,18 +294,18 @@ class Displayer:
             else:
                 # ...otherwise, use standard template and get further info
                 template = self.repo_template
-                template_mapping['local_branch'] = self.format_value_text(
+                template_mapping['local_branch'] = self.apply_style(
                     repo_status['local_branch'],
                     style='bold'
                 )
-                template_mapping['remote_branch'] = self.format_value_text(
+                template_mapping['remote_branch'] = self.apply_style(
                     repo_status['remote_branch'],
                     style='bold'
                 )
                 n_ahead = repo_status['n_commits_ahead']
                 n_behind = repo_status['n_commits_behind']
-                n_ahead_fmt = self.format_value_text(value=n_ahead, style='bold')
-                n_behind_fmt = self.format_value_text(value=n_behind, style='bold')
+                n_ahead_fmt = self.apply_style(value=n_ahead, style='bold')
+                n_behind_fmt = self.apply_style(value=n_behind, style='bold')
 
                 if n_ahead is n_behind is None:
                     # local repository isn't tracking a remote
@@ -378,11 +386,11 @@ class Displayer:
                                 fpath = a_path
                                 change_type = 'new file'
 
-                            file_template_mapping['change_type'] = self.format_value_text(
+                            file_template_mapping['change_type'] = self.apply_style(
                                 value=change_type,
                                 style=style
                             )
-                            file_template_mapping['filepath'] = self.format_value_text(
+                            file_template_mapping['filepath'] = self.apply_style(
                                 value=fpath,
                                 style=style
                             )
@@ -412,7 +420,7 @@ class Displayer:
                     n_good += 1
                 else:
                     n_bad += 1
-            template_mapping['repo_name'] = self.format_value_text(
+            template_mapping['repo_name'] = self.apply_style(
                 value=basename(repo_path),
                 style=('bold', name_color)
             )
@@ -432,7 +440,7 @@ class Displayer:
             if isinstance(sm_msg, str):
                 if sm_msg.startswith('HEAD'):
                     # submodule is in a detatched HEAD state
-                    sm_info = self.format_value_text(value=sm_msg, style='red')
+                    sm_info = self.apply_style(value=sm_msg, style='red')
                     all_good = False
                 else:
                     # submodule is not initialized
@@ -440,13 +448,13 @@ class Displayer:
 
             elif sm_dict is None:
                 # everything is up-to-date
-                sm_info = self.format_value_text(
+                sm_info = self.apply_style(
                     value="working tree is clean",
                     style='green'
                 )
             else:
                 # sm_dict is a dict of all None's; working tree is dirty
-                sm_info = self.format_value_text(
+                sm_info = self.apply_style(
                     value="working tree is dirty",
                     style='red'
                 )
@@ -463,7 +471,7 @@ class Displayer:
             # either write the output to a file...
             self.outfile.write_text(self.full_template)
             confirm_msg = f"GitTracker: output written to file at {self.outfile}"
-            confirm_msg = self.format_value_text(value=confirm_msg, style='green')
+            confirm_msg = self.apply_style(value=confirm_msg, style='green')
             print(confirm_msg)
         else:
             # ...or print it to the screen

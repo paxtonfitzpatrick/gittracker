@@ -5,7 +5,7 @@ from string import Template
 # =======================================================================
 OUTER_TEMPLATE = Template(
 """\
-${pkg_ascii_logo}
+${ascii_logo}
 ${n_repos_tracked} tracked repositories: ${summary_msg}
 ${line_sep}
 ${repos_status}\
@@ -45,10 +45,9 @@ ${repo_name}
 )
 
 
-# SUB-TEMPLATES
-# =======================================================================
+# =========================SUB-TEMPLATES=================================
 # fills `branch_info` fields for SINGLE_REPO_COMPLEX in normal case
-BRANCH_INFO = Template(
+BRANCH_INFO_STANDARD = Template(
 """\
 on branch: ${local_branch} ${compared_to_remote} ${remote_branch}
 """
@@ -58,7 +57,7 @@ on branch: ${local_branch} ${compared_to_remote} ${remote_branch}
 # fills `branch_info` fields for SINGLE_REPO_COMPLEX if HEAD is detached
 BRANCH_INFO_DETACHED = Template(
 """\
-${detached_at} (from branch: ${ref_branch}${ref_sha}) ${new_commits}\
+${detached_at} (from branch: ${from_branch}) ${new_commits}\
 """
 )
 
