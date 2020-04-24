@@ -33,19 +33,15 @@ def get_status(repo_paths, verbose=2, follow_submodules=0):
     pbar_off = len(repo_paths) < 10
     ncols = get_terminal_size().columns
     changes = dict.fromkeys(repo_paths)
-    for path in tqdm(
-            repo_paths,
-            unit=' repo',
-            ncols=ncols,
-            leave=False,
-            disable=pbar_off
-    ):
+    for path in tqdm(repo_paths,
+                     unit=' repo',
+                     ncols=ncols,
+                     leave=False,
+                     disable=pbar_off):
         repo = Repo(path)
-        changes[path] = _single_repo_status(
-            repo,
-            verbose=verbose,
-            follow_submodules=follow_submodules
-        )
+        changes[path] = _single_repo_status(repo,
+                                            verbose=verbose,
+                                            follow_submodules=follow_submodules)
 
     return changes
 
@@ -82,7 +78,7 @@ def _single_repo_status(repo, verbose, follow_submodules):
         # alternate info for repos in a detached HEAD state
         'is_detached': False,
         'hexsha': None,
-        'ref_branch': None,
+        'from_branch': None,
         'ref_sha': None,
         'detached_commits': None,
         # info for submodules (if any)
@@ -101,12 +97,12 @@ def _single_repo_status(repo, verbose, follow_submodules):
         # if HEAD is detached, report some slightly different information
         status['is_detached'] = True
         status['hexsha'] = headcommit.hexsha[:7]
-        ref_branch, ref_sha, n_new_commits = _detached_status(repo)
-        status['ref_branch'] = ref_branch
+        from_branch, ref_sha, n_new_commits = _detached_status(repo)
+        status['from_branch'] = from_branch
         if ref_sha != status['hexsha']:
             # if commits have been made since detaching HEAD, report hash
             # where initially detached and number of new commits
-            status['ref_sha'] = f'@{ref_sha}'
+            status['ref_sha'] = ref_sha
             status['detached_commits'] = n_new_commits
 
     else:
