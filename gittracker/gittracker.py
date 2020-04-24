@@ -25,6 +25,6 @@ def track(verbose, submodules=0, outfile=None, plain=False):
     # create Displayer object
     displayer = Displayer(status_info, verbose=verbose, outfile=outfile, plain=plain)
     # format output for terminal window
-    displayer.format_display()
+    displayer.format_status_display()
     # display output
     displayer.display()
