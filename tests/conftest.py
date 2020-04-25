@@ -2,13 +2,8 @@ import pytest
 from os.path import splitext
 from shutil import copy2, rmtree
 from .helpers.mock_repo import MockRepo
-# global path variables have to be in helpers subpackage to avoid
-# circular import
-from .helpers.functions import (
-    MOCK_OUTPUT_DIR,
-    MOCK_REPOS_DIR,
-    REPO_CONFIGS_DIR
-)
+from .helpers.functions import create_expected_output
+from .helpers.constants import MOCK_OUTPUT_DIR, MOCK_REPOS_DIR, REPO_CONFIGS_DIR
 
 
 @pytest.fixture(autouse=True)
@@ -19,11 +14,6 @@ def patch_repo(monkeypatch):
 
 @pytest.fixture(scope='session')
 def mock_repo():
-    # ==== SETUP ====
-    assert REPO_CONFIGS_DIR.is_dir()
-    MOCK_REPOS_DIR.mkdir()
-    MOCK_OUTPUT_DIR.mkdir()
-
     def _setup_repo(config_file):
         """dynamically creates mock repo directories as needed"""
         config_path = REPO_CONFIGS_DIR.joinpath(config_file)
@@ -36,6 +26,13 @@ def mock_repo():
             repo_path.joinpath('.git').mkdir()
             copy2(config_path, repo_path)
         return repo_path
+
+    # ==== SETUP ====
+    assert REPO_CONFIGS_DIR.is_dir()
+    MOCK_REPOS_DIR.mkdir()
+    MOCK_OUTPUT_DIR.mkdir()
+    for config in REPO_CONFIGS_DIR.glob('*[!TEMPLATE].cfg'):
+        create_expected_output(config)
 
     # yield function to tests as fixture
     yield _setup_repo

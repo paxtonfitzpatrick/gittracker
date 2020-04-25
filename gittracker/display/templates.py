@@ -1,46 +1,94 @@
 from string import Template
 
 
-# wrapper template for full output. Applies to all verbosity levels
+# Wrapper template for full output; applied at all verbosity levels:
+#   -
+# =======================================================================
 OUTER_TEMPLATE = Template(
 """\
-${pkg_ascii_logo}
+${ascii_logo}
 ${n_repos_tracked} tracked repositories: ${summary_msg}
 ${line_sep}
 ${repos_status}\
 """
 )
 
-# single-repository template: verbosity level 1
-SINGLE_REPO_V1 = Template("${repo_name}")
 
-# single-repository template: verbosity level 2
-SINGLE_REPO_V2 = Template(
+# Single-repository template: verbosity level 1
+# =======================================================================
+# Only information shown is the repository's name. The name appears in
+# green if 3 conditions are (all) met:
+#       1) the working tree is clean
+#       2) the active branch is not detached, AND
+#       3) the active branch is either up to date with its remote
+#          tracking branch or doesn't have one
+#   otherwise, it appears in red
+SINGLE_REPO_SIMPLE = Template("${repo_name}")
+
+
+# Single-repository template: verbosity levels 2 & 3
+# =======================================================================
+# Shows more detailed info; wraps formatting for verbosity levels 2 & 3:
+#   - repo_name: repository name (colored by the same rules as above)
+#   - repo_path: absolute path to the repository
+#   - branch_info: filled by either BRANCH_INFO or BRANCH_INFO_DETACHED,
+#     depending on the state of the branch
+#   - local_changes: filled by LOCAL_CHANGES_V2 at verbosity level 2 or
+#     0-3 instances of SINGLE_CHANGE_STATE templates at verbosity level 3.
+#     Can also contain instances of SINGLE_SUBMODULE template (see below)
+SINGLE_REPO_COMPLEX = Template(
 """\
 ${repo_name}
     ${repo_path}
-    on branch ${local_branch} ${compared_to_remote} ${remote_branch}
-    ${n_uncommitted} uncommitted changes\
+    ${branch_info}
+    ${local_changes}\
 """
 )
 
-# single-repository template: verbosity level 3
-# Note: this one has to be constructed somewhat indirectly in order to
-# accommodate different possible states of the repository (e.g., presence or
-# lack of staged/unstaged changes). `file_states` gets filled by instances of
-# `SINGLE_CHANGE_STATE` (if any)
-SINGLE_REPO_V3 = Template(
+
+# =========================SUB-TEMPLATES=================================
+# fills `branch_info` fields for SINGLE_REPO_COMPLEX in normal case
+#   - local_branch: the current local branch
+#   - vs_remote: string comparing the local branch to its remote tracking
+#     branch (if it has one)
+#   - remote_branch: the current local branch's remote tracking branch
+#     (if it has one)
+BRANCH_INFO_STANDARD = Template(
 """\
-${repo_name}
-    ${repo_path}
-    on branch ${local_branch} ${compared_to_remote} ${remote_branch}
-    ${change_states}
+on branch ${local_branch} ${vs_remote} ${remote_branch}\
 """
 )
 
-# format skeleton for a single change state (e.g., staged, not staged,
-# untracked) in verbosity level 3. `changed_files` gets filled by instances
-# of `SINGLE_FILE_CHANGE`
+
+# fills `branch_info` fields for SINGLE_REPO_COMPLEX if HEAD is detached
+#   - detached_at: takes the form "HEAD detached at <curr_sha>" where
+#     <curr_sha> is the *current* commit hash of the detached HEAD
+#   - from_branch: the local branch from which the HEAD was detached. If
+#     commits have been made on the detached HEAD, the format will be
+#     "<local_branch>@<ref_sha>" where <ref_sha> is the commit hash where
+#     HEAD was detached from <local_branch> (i.e., the last commit they
+#     have in common)
+#   - new_commits: if commits have been made on the detached HEAD, takes
+#     the format "<n_commits> new commits since detached"
+BRANCH_INFO_DETACHED = Template(
+"""\
+${detached_at} (from branch: ${from_branch}) ${new_commits}\
+"""
+)
+
+
+# fills `local_changes` field at verbosity level 2:
+#   - n_uncommitted: the total number of uncommitted changes, including
+#     staged, tracked-but-not-staged, and untracked files
+LOCAL_CHANGES_V2 = Template("${n_uncommitted} uncommitted changes")
+
+
+# Describes a single "state" of a locally changed file (staged,
+# tracked-but-not-staged, untracked); one or multiple instances fill
+# `local_changes` field at verbosity level 3 (if any local changes):
+#   - n_changed: the number of files in the given state
+#   - change_state_msg: a descriptor for the given state
+#   - changed_files: filled by instances of `SINGLE_FILE_CHANGE` templates
 SINGLE_CHANGE_STATE = Template(
 """\
 ${n_changed} ${change_state_msg}:
@@ -48,33 +96,29 @@ ${n_changed} ${change_state_msg}:
 """
 )
 
-# format skeleton for a single modified file in verbosity level 3
+
+# Describes change to a single file; instances fill the `changed_files`
+# field of SINGLE_CHANGE_STATE template at verbosity level 3:
+#   - change_type: "modified", "deleted", etc. as shown by Git
+#   - filepath: path to the changed file (from the repository root)
 SINGLE_FILE_CHANGE = Template("${change_type}:   ${filepath}")
 
-# replacement skeleton for repositories in detached HEAD states for verbosity
-# levels 2 & 3
-SINGLE_REPO_DETACHED = Template(
-"""\
-${repo_name}
-    ${repo_path}
-    ${detached_head_msg}
-"""
-)
 
-# format skeleton for submodules
-# (analogous to SINGLE_REPO_V2 template; only used with SINGLE_REPO_V3)
+# Describes change to a single submodule from a repository; only used at
+# verbosity level 3 if --submodules flag is passed:
+#   - submodule_path: path to the submodule (from the repository root)
+#   - submodule_info: simple string describing status of submodule.
+#     As applicable, one of:
+#       + "working tree is clean"
+#       + "working tree is dirty"
+#       + "HEAD detached at <sha> where <sha> is current commit hash
+#       + "not initialized" if the submodule has not been initialized
 SINGLE_SUBMODULE = Template(
 """\
 \t${submodule_path}: ${submodule_info}\
 """
 )
 
-# mapping of single repository templates by verbosity value
-REPO_TEMPLATES = {
-    1: SINGLE_REPO_V1,
-    2: SINGLE_REPO_V2,
-    3: SINGLE_REPO_V3
-}
 
 # numeric codes from ANSI escape sequences for text color/formatting
 ANSI_SEQS = {
