@@ -31,36 +31,59 @@ def create_expected_output(config_path, submodule=False):
     config = load_validate_config(config_path)
 
     expected = TRACKER_OUTPUT.copy()
-    expected['local_branch'] = config.get('active_branch', 'name')
-    expected['remote_branch'] = config.get('active_branch', 'remote_branch')
-    if expected['remote_branch'] == '':
-        expected['n_commits_ahead'] = None
-        expected['n_commits_behind'] = None
-    else:
-        expected['n_commits_ahead'] = config.getint('active_branch',
-                                                    'n_commits_ahead')
-        expected['n_commits_behind'] = config.getint('active_branch',
-                                                     'n_commits_behind')
+    if config.get('head', 'is_empty'):
+        if submodule:
+            return "not initialized"
+        else:
+            # shouldn't be using `matches_expected_output` in this case -
+            # empty repositories intentionally raise ValueError
+            return None
+
     files_staged = config.getdifflist('repo', 'staged_changes')
     files_unstaged = config.getdifflist('repo', 'unstaged_changes')
-    expected['files_untracked'] = config.getlist('repo', 'untracked_files')
-    expected['n_untracked'] = len(expected['files_untracked'])
     expected['files_staged'] = [(f.change_type, f.a_path, f.b_path)
                                 for f in files_staged]
-    expected['n_staged'] = len(files_staged)
     expected['files_not_staged'] = [(f.change_type, f.a_path, f.b_path)
-                                for f in files_unstaged]
+                                    for f in files_unstaged]
+    expected['files_untracked'] = config.getpathlist('repo', 'untracked_files')
+    expected['n_staged'] = len(files_staged)
     expected['n_not_staged'] = len(files_unstaged)
+    expected['n_untracked'] = len(expected['files_untracked'])
+    expected['is_detached'] = config.getboolean('head', 'is_detached')
 
-    submodules = config.getdict('submodules', 'paths')
-    if not any(submodules):
-        expected['submodules'] = None
+    if expected['is_detached']:
+        sha_shortened = config.get('head', 'hexsha')[:7]
+        if submodule:
+            return f"HEAD detached at {sha_shortened}"
+        else:
+            expected['hexsha'] = sha_shortened
+            expected['from_branch'] = config.get('head', 'from_branch')
+            expected['ref_sha'] = config.get('head', 'ref_sha')[:7]
+            expected['detached_commits'] = config.getint('head',
+                                                         'detached_commits')
     else:
-        expected['submodules'] = {}
+        expected['local_branch'] = config.get('active_branch', 'name')
+        expected['remote_branch'] = config.get('active_branch', 'remote_branch')
+        if expected['remote_branch'] == '':
+            expected['n_commits_ahead'] = None
+            expected['n_commits_behind'] = None
+        else:
+            expected['n_commits_ahead'] = config.getint('active_branch',
+                                                        'n_commits_ahead')
+            expected['n_commits_behind'] = config.getint('active_branch',
+                                                         'n_commits_behind')
 
-    for path, config_file in submodules.items():
-        expected['submodules'][path] = _create_expected_output(config_file,
-                                                               submodule=True)
+    submodule_paths = config.getpathlist('submodules', 'paths')
+    if not any(submodule_paths):
+        submodules = None
+    else:
+        submodules = {}
+        for sm_path in submodule_paths:
+            sm_config_path = REPO_CONFIGS_DIR.joinpath('submodule_configs',
+                                                       f"{sm_path.name}.cfg")
+            submodules[sm_path] = create_expected_output(sm_config_path,
+                                                         submodule=True)
+    expected['submodules'] = submodules
 
     if not submodule:
         with open(output_filepath, 'wb') as f:
@@ -198,7 +221,9 @@ def load_validate_config(config_path):
                 config.getint('active_branch', option)
             except ValueError as e:
                 message = f"{option} must be an integer if remote_branch is set"
-                raise InvalidConfigValue(config_file, 'active_branch', message)
+                raise InvalidConfigValue(config_file,
+                                         'active_branch',
+                                         message) from e
 
     # validate submodule path formatting and existence of config files
     # ===================================================================
@@ -222,23 +247,7 @@ def load_validate_config(config_path):
                       f"Expected file at {sm_config_path}"
             raise InvalidConfigValue(config_file, 'submodules', message)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return config
 
 
 def matches_expected_output(repo_name, test_output, verbose=2, include_submodules=False):
