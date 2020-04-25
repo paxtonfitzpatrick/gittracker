@@ -18,3 +18,9 @@ class InvalidConfigValue(TestSetupError):
         msg = f"in {config_file}, [{section}] section:\n\t{message}"
         super().__init__(msg)
 
+
+class MockConfigNotFound(TestSetupError):
+    def __init__(self, source_file, missing_config):
+        msg = f"{source_file} points to a config that doesn't exist: " \
+              f"{missing_config}"
+        super().__init__(msg)
