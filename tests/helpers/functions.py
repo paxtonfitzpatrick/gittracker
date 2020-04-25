@@ -65,6 +65,7 @@ def create_expected_output(config_path, submodule=False):
         expected['local_branch'] = config.get('active_branch', 'name')
         expected['remote_branch'] = config.get('active_branch', 'remote_branch')
         if expected['remote_branch'] == '':
+            # local branch isn't tracking a remote branch
             expected['n_commits_ahead'] = None
             expected['n_commits_behind'] = None
         else:
