@@ -41,7 +41,7 @@ class MockRepo:
         return config
 
     def _setup_submodules(self, submodules_config):
-        submodules_paths = submodules_config.getpathlist('paths_configs')
+        submodules_paths = submodules_config.getpathlist('paths')
         submodules = []
         for sm_path in submodules_paths:
             sm_abspath = self.repo_path.joinpath(sm_path)
