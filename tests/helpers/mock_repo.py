@@ -145,12 +145,19 @@ class MockRepo:
         """
         def __init__(self, head_config, staged_changes):
             self.is_detached = head_config.getboolean('is_detached')
-            self._detached_commits = head_config.getint('detached_commits')
-            self._from_branch = head_config.get('from_branch')
-            self._hexsha = head_config.get('hexsha')
-            self._is_empty = head_config.getboolean('is_empty')
-            self._ref_sha = head_config.get('ref_sha')
             self._staged_changes = staged_changes
+            if self.is_detached:
+                self._detached_commits = head_config.getint('detached_commits')
+                self._from_branch = head_config.get('from_branch')
+                self._hexsha = head_config.get('hexsha')
+                self._is_empty = head_config.getboolean('is_empty')
+                self._ref_sha = head_config.get('ref_sha')
+            else:
+                self._detached_commits = None
+                self._from_branch = None
+                self._hexsha = None
+                self._is_empty = None
+                self._ref_sha = None
 
         @property
         def commit(self):
