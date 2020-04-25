@@ -188,7 +188,7 @@ def load_validate_config(config_path):
     # ===================================================================
     if is_detached:
         for val in ('hexsha', 'from_branch', 'ref_sha', 'detached_commits'):
-            if config.get('head', 'val') == '':
+            if config.get('head', val) == '':
                 message = f"{val} is required if is_detached is set to true"
                 raise InvalidConfigValue(config_file, 'head', message)
 
