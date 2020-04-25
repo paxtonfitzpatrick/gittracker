@@ -76,9 +76,7 @@ class MockRepo:
 
     @property
     def index(self):
-        """
-        patch for git.index.IndexFile
-        """
+        """patch for git.index.IndexFile"""
         def _get_staged_changes(none_arg):
             """
             in turn, a patch for the `git.index.IndexFile.diff(None)` method
@@ -147,9 +145,20 @@ class MockRepo:
         """
         def __init__(self, head_config, staged_changes):
             self.is_detached = head_config.getboolean('is_detached')
-            self._staged_changes = staged_changes
-            self._is_empty = head_config.getboolean('_is_empty')
+            self._detached_commits = head_config.getint('detached_commits')
+            self._from_branch = head_config.get('from_branch')
             self._hexsha = head_config.get('hexsha')
+            self._is_empty = head_config.getboolean('is_empty')
+            self._ref_sha = head_config.get('ref_sha')
+            self._staged_changes = staged_changes
+            # raise exception here if config file isn't properly set up
+            assert not ((self.is_detached and self._is_empty),
+                        "is_detached and is_empty fields cannot both be "
+                        "set to true")
+            if self.is_detached:
+                assert (self._from_branch != '' and self._ref_sha != '',
+                        "from_branch and ref_sha fields are required in "
+                        "config file if is_detached is set to true")
 
         @property
         def commit(self):
@@ -170,6 +179,34 @@ class MockRepo:
             HeadCommit = namedtuple('HeadCommit', ('hexsha', 'diff'))
             return HeadCommit(hexsha=self._hexsha, diff=_get_staged_changes)
 
+        def log(self):
+            """
+            patch for .log() method, which normally returns a list of log
+            entries for the current HEAD, ordered from oldest to newest.
+            We specifically need to mimic a list of objects where:
+                - each object has `.message` and `.newhexsha` attributes
+                  that return strings
+                - the `.message` attribute of the object at index
+                  `len(list) - self._detached_commits` takes the format
+                  "checkout: moving from {self._from_branch} to
+                  {self._ref_sha}" (though we don't use it, that object's
+                  `.newhexsha` attr should also be `self._ref_sha`)
+                - the `.newhexsha` attribute of the last object in the
+                  list (most recent log entry) should be the current
+                  commit hash (self._hexsha)
+            """
+            LogEntry = namedtuple('LogEntry', ('message', 'newhexsha'))
+            target_message = f"checkout: moving from {self._from_branch} to " \
+                             f"{self._ref_sha}"
+            target_entry = LogEntry(target_message, self._ref_sha)
+            last_entry = LogEntry('', self._hexsha)
+            filler_entry = LogEntry('', '')
+            log_list = ([filler_entry] * 10  # arbitrary number of older commits
+                        + [target_entry]
+                        + [filler_entry] * (self._detached_commits - 1)
+                        + [last_entry])
+            return log_list
+
 
 class MockSubmodule:
     """
@@ -187,7 +224,7 @@ class MockSubmodule:
         config = self._load_config()
         self.hexsha = config.get('head', 'hexsha')
         self._is_detached = config.getboolean('head', 'is_detached')
-        self._is_initialized = not config.getboolean('head', '_is_empty')
+        self._is_initialized = not config.getboolean('head', 'is_empty')
 
     def _load_config(self):
         config_path = self._full_path.joinpath(f"{self._full_path.name}.cfg")
