@@ -31,7 +31,7 @@ def create_expected_output(config_path, submodule=False):
     config = load_validate_config(config_path)
 
     expected = TRACKER_OUTPUT.copy()
-    if config.get('head', 'is_empty'):
+    if config.getboolean('head', 'is_empty'):
         if submodule:
             return "not initialized"
         else:
