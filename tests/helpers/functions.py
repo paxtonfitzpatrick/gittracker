@@ -5,14 +5,7 @@ from configparser import ConfigParser
 from pathlib import Path
 from shutil import copy2
 from subprocess import PIPE, run
-
-
-# holds config files (name format: `<repo_name>.cfg`)
-REPO_CONFIGS_DIR = Path(__file__).resolve().parents[1].joinpath('repo-configs')
-# holds generated mock repositories
-MOCK_REPOS_DIR = REPO_CONFIGS_DIR.parent.joinpath('mock-repos')
-# holds data files of expected test output (name format `<repo_name>.p`)
-MOCK_OUTPUT_DIR = REPO_CONFIGS_DIR.parent.joinpath('expected-output')
+from .constants import MOCK_OUTPUT_DIR, REPO_CONFIGS_DIR
 
 
 def run_command(cmd):
@@ -77,6 +70,7 @@ def _create_expected_output(repo_name, submodule=False):
 
     # some upfront checks for conditions that will return a string
     # rather than a dict
+
     if config.getboolean('head', '_is_empty'):
         if submodule:
             expected = "not initialized"
@@ -125,9 +119,9 @@ def _create_expected_output(repo_name, submodule=False):
     return expected
 
 
-###########################################
-# custom type converters for ConfigParser #
-###########################################
+#########################################################################
+#                Custom type converters for ConfigParser                #
+#########################################################################
 def _get_multiline_list(val):
     """
     splits a newline-separated list of values for a single option into a
