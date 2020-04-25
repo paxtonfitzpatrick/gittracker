@@ -58,9 +58,11 @@ def create_expected_output(config_path, submodule=False):
         else:
             expected['hexsha'] = sha_shortened
             expected['from_branch'] = config.get('head', 'from_branch')
-            expected['ref_sha'] = config.get('head', 'ref_sha')[:7]
-            expected['detached_commits'] = config.getint('head',
-                                                         'detached_commits')
+            ref_sha = config.get('head', 'ref_sha')[:7]
+            if ref_sha != sha_shortened:
+                expected['ref_sha'] = ref_sha
+                expected['detached_commits'] = config.getint('head',
+                                                             'detached_commits')
     else:
         expected['local_branch'] = config.get('active_branch', 'name')
         expected['remote_branch'] = config.get('active_branch', 'remote_branch')
