@@ -43,10 +43,12 @@ class Displayer:
 
         if self.verbose == 1:
             self.repo_template = SINGLE_REPO_SIMPLE
+            self.repo_display_sep = '\n'
             self.repo_format_func = self._format_simple
             self.local_format_func = None
         else:
             self.repo_template = SINGLE_REPO_COMPLEX
+            self.repo_display_sep = '\n\n'
             self.repo_format_func = self._format_complex
             if self.verbose == 2:
                 self.local_format_func = self._format_local_v2
@@ -122,14 +124,13 @@ class Displayer:
             'n_repos_tracked': n_total_fmt,
             'summary_msg': summary_msg_fmt,
             'line_sep': '=' * self.display_width,
-            'repos_status': '\n'.join(filled_repo_templates)
+            'repos_status': self.repo_display_sep.join(filled_repo_templates)
         }
         full_template = self.outer_template.safe_substitute(template_mapping)
 
         # cleans up template formatting for verbosity level 3
         # in cases where repos have no uncommitted changes
-        full_template = full_template.replace('    \n', '\n')
-        self.full_template = full_template.replace('\n\n\n', '\n\n')
+        self.full_template = full_template.replace('    \n', '\n')
 
     def _format_simple(self, repo_info):
         # repo_info is a tuple of (key, value) from self.repos
@@ -157,10 +158,13 @@ class Displayer:
         else:
             branch_format_func = self._format_branch_standard
         branch_info, branch_clean = branch_format_func(status)
-        local_changes, files_clean = self.local_format_func(repo_info)
+        local_changes, files_clean = self.local_format_func(status)
         repo_clean = branch_clean and files_clean
+        color = 'green' if repo_clean else 'red'
+        repo_name_fmt = self.apply_style(repo_name, (color, 'bold'))
+
         template_mapping = {
-            'repo_name': repo_name,
+            'repo_name': repo_name_fmt,
             'repo_path': repo_path,
             'branch_info': branch_info,
             'local_changes': local_changes
@@ -251,7 +255,7 @@ class Displayer:
         change_codes = {
             'D': 'deleted',
             'M': 'modified',
-            'N': 'new file',
+            'A': 'new file',
             'R': 'renamed'
         }
 
@@ -356,4 +360,4 @@ class Displayer:
         else:
             # ...or print it to the screen
             clear_display()
-            print(self.full_template)
+            print(self.full_template, end='\n\n')

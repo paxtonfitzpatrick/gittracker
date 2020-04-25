@@ -55,7 +55,7 @@ ${repo_name}
 #     (if it has one)
 BRANCH_INFO_STANDARD = Template(
 """\
-on branch ${local_branch} ${vs_remote} ${remote_branch}
+on branch ${local_branch} ${vs_remote} ${remote_branch}\
 """
 )
 
