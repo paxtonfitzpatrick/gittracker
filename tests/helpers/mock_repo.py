@@ -13,7 +13,7 @@ class MockRepo:
 
         self._staged_changes = self._config.getdifflist('repo', 'staged_changes')
         self.unstaged_changes = self._config.getdifflist('repo', 'unstaged_changes')
-        self.untracked_files = self._config.getlist('repo', 'untracked_files')
+        self.untracked_files = self._config.getpathlist('repo', 'untracked_files')
         self.head = self.MockHead(self._config['head'], self._staged_changes)
         # if HEAD is detached, we want to fail if trying to access
         # `repo.active_branch`, and also avoid creating a MockActiveBranch
@@ -41,9 +41,9 @@ class MockRepo:
         return config
 
     def _setup_submodules(self, submodules_config):
-        submodules_dict = submodules_config.getdict('paths_configs')
+        submodules_paths = submodules_config.getpathlist('paths_configs')
         submodules = []
-        for sm_path, sm_config in submodules_dict.items():
+        for sm_path in submodules_paths:
             sm_abspath = self.repo_path.joinpath(sm_path)
             # submodule may already have been set up by previous test
             if not sm_abspath.is_dir():
@@ -51,7 +51,7 @@ class MockRepo:
                 # .git dir needed to create MockRepo from submodule
                 sm_abspath.joinpath('.git').mkdir()
                 # copy in submodule's config file
-                add_submodule_config(sm_config, sm_abspath)
+                add_submodule_config(sm_abspath)
 
             # create MockSubmodule object
             submodules.append(MockSubmodule(sm_path, self.repo_path))
@@ -151,14 +151,6 @@ class MockRepo:
             self._is_empty = head_config.getboolean('is_empty')
             self._ref_sha = head_config.get('ref_sha')
             self._staged_changes = staged_changes
-            # raise exception here if config file isn't properly set up
-            assert not ((self.is_detached and self._is_empty),
-                        "is_detached and is_empty fields cannot both be "
-                        "set to true")
-            if self.is_detached:
-                assert (self._from_branch != '' and self._ref_sha != '',
-                        "from_branch and ref_sha fields are required in "
-                        "config file if is_detached is set to true")
 
         @property
         def commit(self):
@@ -227,7 +219,7 @@ class MockSubmodule:
         self._is_initialized = not config.getboolean('head', 'is_empty')
 
     def _load_config(self):
-        config_path = self._full_path.joinpath(f"{self._full_path.name}.cfg")
+        config_path = self._full_path.joinpath(f"{self.path.name}.cfg")
         config = ConfigParser(converters=CONVERTERS)
         with open(config_path, 'r') as f:
             config.read_file(f)
