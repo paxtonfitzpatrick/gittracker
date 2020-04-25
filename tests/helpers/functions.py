@@ -153,7 +153,7 @@ def load_validate_config(config_path):
         valid_change_types = ('R', 'M', 'A', 'D')
         if option == 'unstaged_changes':
             valid_change_types = valid_change_types[1:]
-        lines = config.get('repo', option).strip.splitlines()
+        lines = config.get('repo', option).strip().splitlines()
         for val in lines:
             if val.count(':') != 2:
                 message = f"{option} value should be a newline-separated " \
