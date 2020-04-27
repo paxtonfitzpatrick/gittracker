@@ -5,13 +5,10 @@ from configparser import ConfigParser, NoOptionError, NoSectionError
 from pathlib import Path
 from shutil import copy2
 from subprocess import PIPE, run
-from .constants import (
-    MOCK_OUTPUT_DIR,
-    REPO_CONFIGS_DIR,
-    TRACKER_OUTPUT,
-    InvalidConfigValue,
-    MockConfigNotFound
-)
+from .constants import (MOCK_OUTPUT_DIR,
+                        REPO_CONFIGS_DIR,
+                        TRACKER_OUTPUT,
+                        InvalidConfigValue)
 
 
 def add_submodule_config(dest_dir):
