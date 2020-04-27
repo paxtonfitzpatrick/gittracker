@@ -55,7 +55,7 @@ class MockRepo:
                 add_submodule_config(sm_abspath)
 
             # create MockSubmodule object
-            submodules.append(MockSubmodule(sm_path, self.repo_path))
+            submodules.append(MockSubmodule(Path(sm_path), self.repo_path))
         return submodules
 
     def _validate_repo(self, repo_path):
