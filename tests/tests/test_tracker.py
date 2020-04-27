@@ -38,9 +38,34 @@ def test_no_remote_clean(mock_repo):
 
 
 def test_head_detached_even_clean(mock_repo):
-    # repo is in a detached HEAD state with no commits or local changes
-    # on detached HEAD
+    # repo is in a detached HEAD state with no new commits or local
+    # changes on detached HEAD
     repo = mock_repo('head-detached-even-clean.cfg')
     output = get_status([repo])
     assert matches_expected_output('head-detached-even-clean', output[repo])
+
+
+def test_head_detached_even_dirty(mock_repo):
+    # repo is in a detached HEAD state with new commits on detached HEAD
+    # but no local changes
+    repo = mock_repo('head-detached-even-dirty.cfg')
+    output = get_status([repo])
+    assert matches_expected_output('head-detached-even-dirty', output[repo])
+
+
+def test_head_detached_ahead_clean(mock_repo):
+    # repo is in a detached HEAD state with new commits on detached HEAD
+    # but no uncommitted changes
+    repo = mock_repo('head-detached-ahead-clean.cfg')
+    output = get_status([repo])
+    assert matches_expected_output('head-detached-ahead-clean', output[repo])
+
+
+def test_head_detached_ahead_dirty(mock_repo):
+    # repo is in a detached HEAD state with new commits and uncommitted
+    # changes on detached HEAD
+    repo = mock_repo('head-detached-ahead-dirty.cfg')
+    output = get_status([repo])
+    assert matches_expected_output('head-detached-ahead-dirty', output[repo])
+
 
