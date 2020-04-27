@@ -37,6 +37,13 @@ def test_no_remote_clean(mock_repo):
     assert matches_expected_output('no-remote-clean', output[repo])
 
 
+def test_no_remote_dirty(mock_repo):
+    # repo has no remote & working tree is dirty
+    repo = mock_repo('no-remote-dirty.cfg')
+    output = get_status([repo])
+    assert matches_expected_output('no-remote-dirty', output[repo])
+
+
 def test_head_detached_even_clean(mock_repo):
     # repo is in a detached HEAD state with no new commits or local
     # changes on detached HEAD
