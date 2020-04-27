@@ -80,7 +80,7 @@ def create_expected_output(config_path, submodule=False):
         submodules = {}
         for sm_path in submodule_paths:
             sm_config_path = REPO_CONFIGS_DIR.joinpath('submodule_configs',
-                                                       f"{sm_path.name}.cfg")
+                                                       f"{Path(sm_path).name}.cfg")
             submodules[sm_path] = create_expected_output(sm_config_path,
                                                          submodule=True)
     expected['submodules'] = submodules
