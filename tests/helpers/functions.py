@@ -30,7 +30,7 @@ def create_expected_output(config_path, submodule=False):
     expected = TRACKER_OUTPUT.copy()
     if config.getboolean('head', 'is_empty'):
         if submodule:
-            return "not initialized"
+            return None, "not initialized"
         else:
             # shouldn't be using `matches_expected_output` in this case -
             # empty repositories intentionally raise ValueError
@@ -38,9 +38,13 @@ def create_expected_output(config_path, submodule=False):
 
     files_staged = config.getdifflist('repo', 'staged_changes')
     files_unstaged = config.getdifflist('repo', 'unstaged_changes')
-    expected['files_staged'] = [(f.change_type, f.a_path, f.b_path)
-                                for f in files_staged]
-    expected['files_not_staged'] = [(f.change_type, f.a_path, f.b_path)
+    files_staged_expected = []
+    for file in files_staged:
+        b_path = file.b_path if file.change_type == 'R' else None
+        files_staged_expected.append((file.change_type, file.a_path, b_path))
+
+    expected['files_staged'] = files_staged_expected
+    expected['files_not_staged'] = [(f.change_type, f.a_path, None)
                                     for f in files_unstaged]
     expected['files_untracked'] = config.getpathlist('repo', 'untracked_files')
     expected['n_staged'] = len(files_staged)
@@ -51,7 +55,7 @@ def create_expected_output(config_path, submodule=False):
     if expected['is_detached']:
         sha_shortened = config.get('head', 'hexsha')[:7]
         if submodule:
-            return f"HEAD detached at {sha_shortened}"
+            return None, f"HEAD detached at {sha_shortened}"
         else:
             expected['hexsha'] = sha_shortened
             expected['from_branch'] = config.get('head', 'from_branch')
@@ -79,17 +83,28 @@ def create_expected_output(config_path, submodule=False):
     else:
         submodules = {}
         for sm_path in submodule_paths:
+            sm_path = Path(sm_path)
             sm_config_path = REPO_CONFIGS_DIR.joinpath('submodule-configs',
-                                                       f"{Path(sm_path).name}.cfg")
-            submodules[sm_path] = create_expected_output(sm_config_path,
-                                                         submodule=True)
+                                                       f"{sm_path.name}.cfg")
+            sm_output = create_expected_output(sm_config_path, submodule=True)
+            # submodule output is pinned at verbosiy level 1, where
+            # these values don't get set and remain Nones
+            if sm_output[0] is not None:
+                # will be None instead of dict if not initialized or HEAD
+                # is detached
+                for state in ('staged', 'not_staged', 'untracked'):
+                    sm_output[0][f'files_{state}'] = None
+
+            submodules[sm_path] = sm_output
+
     expected['submodules'] = submodules
 
-    if not submodule:
+    if submodule:
+        return expected, None
+    else:
         with open(output_filepath, 'wb') as f:
             pickle.dump(expected, f)
-
-    return expected
+        return expected
 
 
 def load_validate_config(config_path):
