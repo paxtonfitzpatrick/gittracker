@@ -110,7 +110,7 @@ def test_submodule_even_clean(mock_repo, verbosity, submodules):
     # submodule is even with its remote and working tree is clean
     repo = mock_repo('submodule-even-clean.cfg')
     output = get_status([repo], verbosity, submodules)
-    assert matches_expected_output('head-detached-ahead-dirty',
+    assert matches_expected_output('submodule-even-clean',
                                    output[repo],
                                    verbosity,
                                    submodules)
