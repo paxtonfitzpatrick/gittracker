@@ -154,7 +154,7 @@ def load_validate_config(config_path):
             valid_change_types = valid_change_types[1:]
         lines = config.get('repo', option).strip().splitlines()
         for val in lines:
-            if val.count(':') != 2:
+            if val.count('::') != 2:
                 message = f"{option} value should be a newline-separated " \
                           "list, where each line contains three double colon " \
                           "(::)-separated values: the change type, a_path, " \
