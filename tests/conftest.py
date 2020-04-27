@@ -44,3 +44,13 @@ def mock_repo():
     # ==== TEARDOWN ====
     rmtree(MOCK_REPOS_DIR)
     rmtree(MOCK_OUTPUT_DIR)
+
+
+def pytest_generate_tests(metafunc):
+    # restrict parametrization to relevant test modules
+    if metafunc.module in ('test_tracker', 'test_display'):
+        # test all three verbosity levels separately
+        if 'verbosity' in metafunc.fixturenames:
+            metafunc.parametrize('verbosity', (1, 2, 3))
+        if 'submodules' in metafunc.fixturenames:
+            metafunc.parametrize('submodules', (0, 1))
