@@ -239,7 +239,7 @@ def load_validate_config(config_path):
                       "repository (cannot include '..')"
             raise InvalidConfigValue(config_file, 'submodules', message)
 
-        sm_config_name = f'{Path(sm_path.name)}.cfg'
+        sm_config_name = f'{Path(sm_path).name}.cfg'
         sm_config_path = REPO_CONFIGS_DIR.joinpath('submodule-configs',
                                                    sm_config_name)
         if not sm_config_path.is_file():
