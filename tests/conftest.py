@@ -51,6 +51,6 @@ def pytest_generate_tests(metafunc):
     if metafunc.module in ('test_tracker', 'test_display'):
         # test all three verbosity levels separately
         if 'verbosity' in metafunc.fixturenames:
-            metafunc.parametrize('verbosity', (1, 2, 3))
+            metafunc.parametrize('verbosity', (1, 2, 3), scope='function')
         if 'submodules' in metafunc.fixturenames:
-            metafunc.parametrize('submodules', (0, 1))
+            metafunc.parametrize('submodules', (0, 1), scope='function')
