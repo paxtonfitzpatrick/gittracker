@@ -5,14 +5,14 @@ from ..helpers.functions import matches_expected_output
 
 
 def test_even_clean(mock_repo):
-    # repo is even with remote & working tree is clean
+    # repo is even with remote and working tree is clean
     repo = mock_repo('even-clean.cfg')
     output = get_status([repo])
     assert matches_expected_output('even-clean', output[repo])
 
 
 def test_even_dirty(mock_repo):
-    # repo is even with remote & working tree is dirty
+    # repo is even with remote and working tree is dirty
     repo = mock_repo('even-dirty.cfg')
     output = get_status([repo])
     assert matches_expected_output('even-dirty', output[repo])
@@ -92,3 +92,11 @@ def test_empty(mock_repo):
               "initialized repositories"
     with pytest.raises(InvalidGitRepositoryError, match=message):
         output = get_status([repo])
+
+
+# =========================== SUBMODULE TESTS ===========================
+def test_submodule_even_clean(mock_repo):
+    # submodule is even with its remote and working tree is clean
+    repo = mock_repo('submodule-even-clean.cfg')
+    output = get_status([repo])
+    assert matches_expected_output('head-detached-ahead-dirty', output[repo])
