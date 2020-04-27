@@ -9,6 +9,7 @@ class MockRepo:
     """patch for git.Repo"""
     def __init__(self, repo_path):
         self.repo_path = self._validate_repo(repo_path)
+        self.working_dir = self.repo_path
         self._config = self._load_config()
 
         self._staged_changes = self._config.getdifflist('repo', 'staged_changes')
@@ -145,18 +146,17 @@ class MockRepo:
         """
         def __init__(self, head_config, staged_changes):
             self.is_detached = head_config.getboolean('is_detached')
+            self._is_empty = head_config.getboolean('is_empty')
             self._staged_changes = staged_changes
             if self.is_detached:
                 self._detached_commits = head_config.getint('detached_commits')
                 self._from_branch = head_config.get('from_branch')
                 self._hexsha = head_config.get('hexsha')
-                self._is_empty = head_config.getboolean('is_empty')
                 self._ref_sha = head_config.get('ref_sha')
             else:
                 self._detached_commits = None
                 self._from_branch = None
                 self._hexsha = None
-                self._is_empty = None
                 self._ref_sha = None
 
         @property
