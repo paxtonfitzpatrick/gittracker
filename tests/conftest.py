@@ -33,6 +33,11 @@ def mock_repo():
 
     # ==== SETUP ====
     assert REPO_CONFIGS_DIR.is_dir()
+    debug_dir = REPO_CONFIGS_DIR.parent.joinpath('random_dir')
+    if debug_dir.is_dir():
+        raise ValueError("setup fixture is being run every test...")
+    else:
+        REPO_CONFIGS_DIR.parent.joinpath('random_dir').mkdir()
     MOCK_REPOS_DIR.mkdir()
     MOCK_OUTPUT_DIR.mkdir()
     for config in REPO_CONFIGS_DIR.glob('*[!TEMPLATE].cfg'):
