@@ -96,11 +96,21 @@ def test_head_detached_ahead_dirty(mock_repo, verbosity):
                                    verbosity)
 
 
-def test_empty(mock_repo, verbosity):
+def test_empty(mock_repo, verbosity, capsys):
     # EXPECTED FAILURE: repo is newly initialized and has no commit history
     repo = mock_repo('empty.cfg')
     message = "GitTracker currently doesn't support tracking newly " \
               "initialized repositories"
+    if verbosity == 3:
+        from ..helpers.constants import MOCK_OUTPUT_DIR
+        with capsys.disabled():
+            print('\n')
+            print(MOCK_OUTPUT_DIR)
+            print(str(MOCK_OUTPUT_DIR))
+            print('is it a directory?:', MOCK_OUTPUT_DIR.is_dir())
+            for p in MOCK_OUTPUT_DIR.glob('*'):
+                print(str(p))
+
     with pytest.raises(InvalidGitRepositoryError, match=message):
         output = get_status([repo], verbosity)
 
@@ -119,8 +129,12 @@ def test_submodule_single(mock_repo, verbosity, submodules, capsys):
     except:
         from ..helpers.constants import MOCK_OUTPUT_DIR
         with capsys.disabled():
+            print('\n')
             print(MOCK_OUTPUT_DIR)
-            print('\n'.join(list(MOCK_OUTPUT_DIR.glob('*'))))
+            print(str(MOCK_OUTPUT_DIR))
+            print('is it a directory?:', MOCK_OUTPUT_DIR.is_dir())
+            for p in MOCK_OUTPUT_DIR.glob('*'):
+                print(str(p))
 
 
 def test_submodule_multiple(mock_repo, verbosity, submodules):
