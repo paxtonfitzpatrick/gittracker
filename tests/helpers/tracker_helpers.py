@@ -20,7 +20,7 @@ def add_submodule_config(dest_dir):
         copy2(src, dest_dir)
 
 
-def create_expected_output(config_path, submodule=False):
+def create_tracker_output(config_path, submodule=False):
     # submodule arg used for recursive calls to set proper config
     # directory and avoid output to file
     repo_name = config_path.stem
@@ -86,7 +86,7 @@ def create_expected_output(config_path, submodule=False):
             sm_path = Path(sm_path)
             sm_config_path = REPO_CONFIGS_DIR.joinpath('submodule-configs',
                                                        f"{sm_path.name}.cfg")
-            sm_output = create_expected_output(sm_config_path, submodule=True)
+            sm_output = create_tracker_output(sm_config_path, submodule=True)
             # submodule output is pinned at verbosiy level 1, where
             # these values don't get set and remain Nones
             if sm_output[0] is not None:

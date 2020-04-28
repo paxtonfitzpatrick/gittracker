@@ -2,7 +2,7 @@ from collections import namedtuple
 from configparser import ConfigParser
 from pathlib import Path
 from git import InvalidGitRepositoryError
-from .functions import CONVERTERS, add_submodule_config
+from .tracker_helpers import CONVERTERS, add_submodule_config
 
 
 class MockRepo:
@@ -55,7 +55,7 @@ class MockRepo:
                 add_submodule_config(sm_abspath)
 
             # create MockSubmodule object
-            submodules.append(MockSubmodule(Path(sm_path), self.repo_path))
+            submodules.append(MockSubmodule(sm_path, self.repo_path))
         return submodules
 
     def _validate_repo(self, repo_path):
@@ -226,9 +226,9 @@ class MockSubmodule:
         self._is_initialized = not config.getboolean('head', 'is_empty')
 
     def _load_config(self):
-        config_path = self._full_path.joinpath(f"{self.path.name}.cfg")
+        config_path = self._full_path.joinpath(f"{Path(self.path).name}.cfg")
         config = ConfigParser(converters=CONVERTERS)
-        with open(config_path, 'r') as f:
+        with config_path.open('r') as f:
             config.read_file(f)
         return config
 

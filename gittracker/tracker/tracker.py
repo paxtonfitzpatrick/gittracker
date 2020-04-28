@@ -39,7 +39,7 @@ def get_status(repo_paths, verbose=2, follow_submodules=0):
                      leave=False,
                      disable=pbar_off):
         repo = Repo(path)
-        changes[path] = _single_repo_status(repo,
+        changes[str(path)] = _single_repo_status(repo,
                                             verbose=verbose,
                                             follow_submodules=follow_submodules)
 
