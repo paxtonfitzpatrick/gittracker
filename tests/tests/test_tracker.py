@@ -106,15 +106,21 @@ def test_empty(mock_repo, verbosity):
 
 
 # =========================== SUBMODULE TESTS ===========================
-def test_submodule_single(mock_repo, verbosity, submodules):
+def test_submodule_single(mock_repo, verbosity, submodules, capsys):
     # repository with a single submodule (both repo and submodule are
     # even with their remotes with clean working trees)
     repo = mock_repo('submodule-single.cfg')
     output = get_status([repo], verbosity, submodules)
-    assert matches_expected_output('submodule-single',
-                                   output[repo],
-                                   verbosity,
-                                   submodules)
+    try:
+        assert matches_expected_output('submodule-single',
+                                       output[repo],
+                                       verbosity,
+                                       submodules)
+    except:
+        from ..helpers.constants import MOCK_OUTPUT_DIR
+        with capsys.disabled():
+            print(MOCK_OUTPUT_DIR)
+            print('\n'.join(list(MOCK_OUTPUT_DIR.glob('*'))))
 
 
 def test_submodule_multiple(mock_repo, verbosity, submodules):
