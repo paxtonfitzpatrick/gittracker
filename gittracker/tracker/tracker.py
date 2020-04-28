@@ -138,7 +138,7 @@ def _single_repo_status(repo, verbose, follow_submodules):
     # format methods and unit tests simpler, but skipping when
     # unnecessary saves noticeable time if dealing with many repositories
     if verbose == 3:
-        # go through any staged changes manually to handle renames
+        # go through any staged changes & manually to handle renames
         files_staged = []
         for diff in staged:
             a_path = diff.a_path

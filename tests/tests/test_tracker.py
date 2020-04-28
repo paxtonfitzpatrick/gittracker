@@ -106,11 +106,43 @@ def test_empty(mock_repo, verbosity):
 
 
 # =========================== SUBMODULE TESTS ===========================
-def test_submodule_even_clean(mock_repo, verbosity, submodules):
-    # submodule is even with its remote and working tree is clean
-    repo = mock_repo('submodule-even-clean.cfg')
+def test_submodule_single(mock_repo, verbosity, submodules):
+    # repository with a single submodule (both repo and submodule are
+    # even with their remotes with clean working trees)
+    repo = mock_repo('submodule-single.cfg')
     output = get_status([repo], verbosity, submodules)
-    assert matches_expected_output('submodule-even-clean',
+    assert matches_expected_output('submodule-single',
+                                   output[repo],
+                                   verbosity,
+                                   submodules)
+
+
+def test_submodule_multiple(mock_repo, verbosity, submodules):
+    # repository with multiple submodules (submodules are various
+    # combinations of ahead/behind/clean/dirty)
+    repo = mock_repo('submodule-multiple.cfg')
+    output = get_status([repo], verbosity, submodules)
+    assert matches_expected_output('submodule-multiple',
+                                   output[repo],
+                                   verbosity,
+                                   submodules)
+
+
+def test_submodule_detached(mock_repo, verbosity, submodules):
+    # repository with a submodule whose HEAD is detached
+    repo = mock_repo('submodule-detached.cfg')
+    output = get_status([repo], verbosity, submodules)
+    assert matches_expected_output('submodule-detached',
+                                   output[repo],
+                                   verbosity,
+                                   submodules)
+
+
+def test_submodule_not_initialized(mock_repo, verbosity, submodules):
+    # repository with a submodule that has not been initialized
+    repo = mock_repo('submodule-not-initialized.cfg')
+    output = get_status([repo], verbosity, submodules)
+    assert matches_expected_output('submodule-not-initialized',
                                    output[repo],
                                    verbosity,
                                    submodules)
