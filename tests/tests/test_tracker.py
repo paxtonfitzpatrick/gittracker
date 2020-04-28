@@ -101,17 +101,8 @@ def test_empty(mock_repo, verbosity):
     repo = mock_repo('empty.cfg')
     message = "GitTracker currently doesn't support tracking newly " \
               "initialized repositories"
-    if verbosity == 3:
-        from ..helpers.constants import MOCK_OUTPUT_DIR
-        print('\n')
-        print(MOCK_OUTPUT_DIR)
-        print(str(MOCK_OUTPUT_DIR))
-        print('is it a directory?:', MOCK_OUTPUT_DIR.is_dir())
-        for p in MOCK_OUTPUT_DIR.glob('*'):
-            print(str(p))
-
     with pytest.raises(InvalidGitRepositoryError, match=message):
-        output = get_status([repo], verbosity)
+        get_status([repo], verbosity)
 
 
 # =========================== SUBMODULE TESTS ===========================
@@ -120,26 +111,10 @@ def test_submodule_single(mock_repo, verbosity, submodules):
     # even with their remotes with clean working trees)
     repo = mock_repo('submodule-single.cfg')
     output = get_status([repo], verbosity, submodules)
-    try:
-        assert matches_expected_output('submodule-single',
-                                       output[repo],
-                                       verbosity,
-                                       submodules)
-    except Exception as e:
-        import time
-        from ..helpers.constants import MOCK_OUTPUT_DIR
-        print('\n')
-        time.sleep(1)
-        print(MOCK_OUTPUT_DIR)
-        time.sleep(1)
-        print(str(MOCK_OUTPUT_DIR))
-        time.sleep(1)
-        print('is it a directory?:', MOCK_OUTPUT_DIR.is_dir())
-        time.sleep(1)
-        for p in MOCK_OUTPUT_DIR.glob('*'):
-            print(str(p))
-
-        raise e
+    assert matches_expected_output('submodule-single',
+                                   output[repo],
+                                   verbosity,
+                                   submodules)
 
 
 def test_submodule_multiple(mock_repo, verbosity, submodules):
