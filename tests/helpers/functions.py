@@ -21,13 +21,16 @@ def add_submodule_config(dest_dir):
 
 
 def create_expected_output(config_path, submodule=False):
+    import time
     # submodule arg used for recursive calls to set proper config
     # directory and avoid output to file
     repo_name = config_path.stem
     output_filepath = MOCK_OUTPUT_DIR.joinpath(f"{repo_name}.p")
     print("output_filepath is ", str(output_filepath))
+    time.sleep(1)
     config = load_validate_config(config_path)
     print('validated')
+    time.sleep(1)
 
     expected = TRACKER_OUTPUT.copy()
     if config.getboolean('head', 'is_empty'):
@@ -101,13 +104,16 @@ def create_expected_output(config_path, submodule=False):
 
     expected['submodules'] = submodules
     print("created expected output for", str(config_path))
+    time.sleep(1)
     if submodule:
         print("config is submodule, not saving")
+        time.sleep(1)
         return expected, None
     else:
         with open(output_filepath, 'wb') as f:
             pickle.dump(expected, f)
         print("saved expected output to ", str(output_filepath))
+        time.sleep(1)
         return expected
 
 

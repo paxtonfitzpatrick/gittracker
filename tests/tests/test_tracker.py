@@ -96,27 +96,26 @@ def test_head_detached_ahead_dirty(mock_repo, verbosity):
                                    verbosity)
 
 
-def test_empty(mock_repo, verbosity, capsys):
+def test_empty(mock_repo, verbosity):
     # EXPECTED FAILURE: repo is newly initialized and has no commit history
     repo = mock_repo('empty.cfg')
     message = "GitTracker currently doesn't support tracking newly " \
               "initialized repositories"
     if verbosity == 3:
         from ..helpers.constants import MOCK_OUTPUT_DIR
-        with capsys.disabled():
-            print('\n')
-            print(MOCK_OUTPUT_DIR)
-            print(str(MOCK_OUTPUT_DIR))
-            print('is it a directory?:', MOCK_OUTPUT_DIR.is_dir())
-            for p in MOCK_OUTPUT_DIR.glob('*'):
-                print(str(p))
+        print('\n')
+        print(MOCK_OUTPUT_DIR)
+        print(str(MOCK_OUTPUT_DIR))
+        print('is it a directory?:', MOCK_OUTPUT_DIR.is_dir())
+        for p in MOCK_OUTPUT_DIR.glob('*'):
+            print(str(p))
 
     with pytest.raises(InvalidGitRepositoryError, match=message):
         output = get_status([repo], verbosity)
 
 
 # =========================== SUBMODULE TESTS ===========================
-def test_submodule_single(mock_repo, verbosity, submodules, capsys):
+def test_submodule_single(mock_repo, verbosity, submodules):
     # repository with a single submodule (both repo and submodule are
     # even with their remotes with clean working trees)
     repo = mock_repo('submodule-single.cfg')
@@ -127,14 +126,18 @@ def test_submodule_single(mock_repo, verbosity, submodules, capsys):
                                        verbosity,
                                        submodules)
     except Exception as e:
+        import time
         from ..helpers.constants import MOCK_OUTPUT_DIR
-        with capsys.disabled():
-            print('\n')
-            print(MOCK_OUTPUT_DIR)
-            print(str(MOCK_OUTPUT_DIR))
-            print('is it a directory?:', MOCK_OUTPUT_DIR.is_dir())
-            for p in MOCK_OUTPUT_DIR.glob('*'):
-                print(str(p))
+        print('\n')
+        time.sleep(1)
+        print(MOCK_OUTPUT_DIR)
+        time.sleep(1)
+        print(str(MOCK_OUTPUT_DIR))
+        time.sleep(1)
+        print('is it a directory?:', MOCK_OUTPUT_DIR.is_dir())
+        time.sleep(1)
+        for p in MOCK_OUTPUT_DIR.glob('*'):
+            print(str(p))
 
         raise e
 
