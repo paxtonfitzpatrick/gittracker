@@ -36,6 +36,7 @@ def mock_repo():
     MOCK_REPOS_DIR.mkdir()
     MOCK_OUTPUT_DIR.mkdir()
     for config in REPO_CONFIGS_DIR.glob('*[!TEMPLATE].cfg'):
+        print("creating output for config:", str(config))
         create_expected_output(config)
 
     # yield function to tests as fixture

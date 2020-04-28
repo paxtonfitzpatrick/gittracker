@@ -126,7 +126,7 @@ def test_submodule_single(mock_repo, verbosity, submodules, capsys):
                                        output[repo],
                                        verbosity,
                                        submodules)
-    except:
+    except Exception as e:
         from ..helpers.constants import MOCK_OUTPUT_DIR
         with capsys.disabled():
             print('\n')
@@ -135,6 +135,8 @@ def test_submodule_single(mock_repo, verbosity, submodules, capsys):
             print('is it a directory?:', MOCK_OUTPUT_DIR.is_dir())
             for p in MOCK_OUTPUT_DIR.glob('*'):
                 print(str(p))
+
+        raise e
 
 
 def test_submodule_multiple(mock_repo, verbosity, submodules):

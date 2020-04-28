@@ -21,4 +21,4 @@ matrix:
 
 before_install: source tests/ci-scripts/before_install.sh
 install: source tests/ci-scripts/install.sh
-script: pytest -v tests/
+script: pytest -s -v tests/

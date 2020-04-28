@@ -25,7 +25,9 @@ def create_expected_output(config_path, submodule=False):
     # directory and avoid output to file
     repo_name = config_path.stem
     output_filepath = MOCK_OUTPUT_DIR.joinpath(f"{repo_name}.p")
+    print("output_filepath is ", str(output_filepath))
     config = load_validate_config(config_path)
+    print('validated')
 
     expected = TRACKER_OUTPUT.copy()
     if config.getboolean('head', 'is_empty'):
@@ -98,12 +100,14 @@ def create_expected_output(config_path, submodule=False):
             submodules[sm_path] = sm_output
 
     expected['submodules'] = submodules
-
+    print("created expected output for", str(config_path))
     if submodule:
+        print("config is submodule, not saving")
         return expected, None
     else:
         with open(output_filepath, 'wb') as f:
             pickle.dump(expected, f)
+        print("saved expected output to ", str(output_filepath))
         return expected
 
 
