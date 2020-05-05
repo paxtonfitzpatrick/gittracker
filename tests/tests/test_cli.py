@@ -1,9 +1,21 @@
 # tests for command line interface
+import shlex
 from os import listdir
 from os.path import isdir
+from pathlib import Path
+from subprocess import PIPE, run
 from gittracker import __version__ as init_version
 from gittracker.parsers.subcommands import SUBCOMMANDS
-from ..helpers.functions import run_command
+
+
+def run_command(cmd):
+    """helper function that formats and tests command line input"""
+    # split args
+    cmd = shlex.split(cmd)
+    # deal with POSIX/Windows path formatting
+    cmd = [str(Path(arg)) if '/' in arg else arg for arg in cmd]
+    result = run(cmd, stdout=PIPE, stderr=PIPE, encoding='UTF-8')
+    return result.returncode, result.stdout, result.stderr
 
 
 def test_entrypoint():

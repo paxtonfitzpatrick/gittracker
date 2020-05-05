@@ -1,7 +1,7 @@
 import pytest
 from git import InvalidGitRepositoryError
 from gittracker.tracker.tracker import get_status
-from ..helpers.functions import matches_expected_output
+from ..helpers.tracker_helpers import matches_expected_output
 
 
 # NOTE: "verbosity" and "submodules" parameters are verbosity levels and
