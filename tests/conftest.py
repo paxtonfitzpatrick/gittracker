@@ -2,7 +2,7 @@ import pytest
 from os.path import splitext
 from shutil import copy2, rmtree
 from .helpers.mock_repo import MockRepo
-from .helpers.functions import create_expected_output
+from .helpers.tracker_helpers import create_tracker_output
 from .helpers.constants import (MOCK_OUTPUT_DIR,
                                 MOCK_REPOS_DIR,
                                 REPO_CONFIGS_DIR,
@@ -29,7 +29,7 @@ def mock_repo():
             repo_path.mkdir()
             repo_path.joinpath('.git').mkdir()
             copy2(config_path, repo_path)
-        return repo_path
+        return str(repo_path)
 
     # ==== SETUP ====
     assert REPO_CONFIGS_DIR.is_dir()
@@ -39,7 +39,8 @@ def mock_repo():
     # Python 3.6/Windows bug: https://bugs.python.org/issue31202
     configs = [f for f in REPO_CONFIGS_DIR.glob('*.cfg') if f.stem != 'TEMPLATE']
     for config in configs:
-        create_expected_output(config)
+        create_tracker_output(config)
+        # create_display_output(config)
 
     # yield function to tests as fixture
     yield _setup_repo
